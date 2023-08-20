@@ -1,5 +1,5 @@
 import { Matches } from 'class-validator';
-import { REGEX_VALIDATOR } from '../utils/validator/regex-validator';
+import { REGEX_VALIDATOR } from '../utils/regex-validator';
 
 export class SigninDto {
   @Matches(REGEX_VALIDATOR.EMAIL, {

@@ -1,8 +1,11 @@
 import { Matches } from 'class-validator';
-import { REGEX_VALIDATOR } from '../utils/validator/regex-validator';
+import { REGEX_VALIDATOR } from '../utils/regex-validator';
 
 export class CreateUserDto {
-  @Matches(REGEX_VALIDATOR.NAME, { message: '' })
+  @Matches(REGEX_VALIDATOR.NAME, {
+    message:
+      'The name must consist of at least three Korean characters(가-힣).',
+  })
   name: string;
 
   @Matches(REGEX_VALIDATOR.EMAIL, {
