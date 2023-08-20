@@ -1,10 +1,19 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  //SerializeOptions,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from '../../dtos/create-user.dto';
-
 import { SigninDto } from '../../dtos/signin.dto';
 
 @Controller('users')
+//@SerializeOptions({ 전역 설정 직렬화
+//  strategy: 'excludeAll',
+//})
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -12,7 +21,7 @@ export class UsersController {
   @HttpCode(HttpStatus.CREATED)
   async createUser(@Body() createUserDto: CreateUserDto) {
     const { name, email, password } = createUserDto;
-    const userId = await this.usersService.createUser(name, email, password);
+    const userId = await this.usersService.create(name, email, password);
 
     return userId;
   }

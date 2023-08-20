@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   MongooseModuleOptions,
   MongooseOptionsFactory,
@@ -6,23 +7,25 @@ import {
 
 @Injectable()
 export class MongooseConfigService implements MongooseOptionsFactory {
-  private readonly envConfig: Record<string, string>;
-
-  constructor() {
-    this.envConfig = process.env;
-  }
+  constructor(private configService: ConfigService) {}
 
   async createMongooseOptions(): Promise<MongooseModuleOptions> {
     return {
-      uri: `mongodb://${this.getConfig('DB_USERNAME')}:${this.getConfig(
+      uri: `mongodb://${this.getEnv('DB_USERNAME')}:${this.getEnv(
         'DB_PASSWORD',
-      )}@${this.getConfig('DB_HOST')}:${+this.getConfig(
-        'DB_PORT',
-      )}/${this.getConfig('DB_DATABASE')}`,
+      )}@${this.getEnv('DB_HOST')}:${this.getEnv('DB_PORT')}/${this.getEnv(
+        'DB_DATABASE',
+      )}`,
     };
   }
 
-  private getConfig(key: string): string {
-    return this.envConfig[key];
+  private getEnv(key: string): string | number {
+    const value = this.configService.get<string>(key);
+
+    if (!value) {
+      throw new Error(`Environment variable ${key} not set`);
+    }
+
+    return value;
   }
 }

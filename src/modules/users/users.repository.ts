@@ -11,37 +11,34 @@ export class UsersRepository {
     @InjectModel(User.name) private readonly usersModel: Model<User>,
   ) {}
 
-  async createUser(name: string, email: string, password: string) {
-    let user = await this.findByEmail(email);
+  async create(name: string, email: string, password: string) {
+    let user = await this.findOne(email);
 
     if (user) {
       throw new ConflictException('User with this email already exists.');
     }
 
-    user = new this.usersModel({
-      name,
-      email,
-      password,
-    });
-
     try {
-      user = await user.save();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+      user = new this.usersModel({
+        name,
+        email,
+        password,
+      });
 
-    return user._id;
+      user = await user.save();
+      return user._id;
+    } catch (error) {
+      throw new InternalServerErrorException('Error while saving user.');
+    }
   }
 
-  async findByEmail(email: string): Promise<User> {
-    let user: User;
-
+  async findOne(email: string): Promise<User> {
     try {
-      user = await this.usersModel.findOne({ email });
+      return await this.usersModel.findOne({ email });
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException(
+        'Error while finding user by email.',
+      );
     }
-
-    return user;
   }
 }

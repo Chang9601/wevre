@@ -4,7 +4,10 @@ import { UsersService } from './users.service';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../entities/user.entity';
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 const createUserDto = {
   name: '박선심',
@@ -13,27 +16,33 @@ const createUserDto = {
 };
 
 describe('UsersController', () => {
-  let controller: UsersController;
+  let usersController: UsersController;
   let usersService: Partial<UsersService>;
 
   beforeEach(async () => {
     const users: User[] = [];
 
     usersService = {
-      createUser: async (name: string, email: string, password: string) => {
-        const saltRounds = 10;
-        const salt = await bcrypt.genSalt(saltRounds);
-        const hashedPassword = await bcrypt.hash(password, salt);
+      create: async (name: string, email: string, password: string) => {
+        try {
+          const saltRounds = 10;
+          const salt = await bcrypt.genSalt(saltRounds);
+          const hashedPassword = await bcrypt.hash(password, salt);
 
-        const user = {
-          id: uuidv4(),
-          name: name,
-          email: email,
-          password: hashedPassword,
-        } as User;
-        users.push(user);
+          const user = {
+            id: uuidv4(),
+            name: name,
+            email: email,
+            password: hashedPassword,
+          } as User;
+          users.push(user);
 
-        return user;
+          return user;
+        } catch (error) {
+          throw new InternalServerErrorException(
+            'Error while hashing password.',
+          );
+        }
       },
       signin: async (email: string, password: string) => {
         const user = users.find((user) => user.email === email);
@@ -58,23 +67,23 @@ describe('UsersController', () => {
       ],
     }).compile();
 
-    controller = module.get<UsersController>(UsersController);
+    usersController = module.get<UsersController>(UsersController);
   });
 
   it('should be defined', () => {
-    expect(controller).toBeDefined();
+    expect(usersController).toBeDefined();
   });
 
   it('should create a user', async () => {
-    const user = await controller.createUser(createUserDto);
+    const user = await usersController.createUser(createUserDto);
 
     expect(user).toHaveProperty('id');
     expect(user.password).not.toEqual(createUserDto.password);
   });
 
-  it('should signin a user', async () => {
-    await controller.createUser(createUserDto);
-    const result = await controller.signin({
+  it('should sign in a user', async () => {
+    await usersController.createUser(createUserDto);
+    const result = await usersController.signin({
       email: createUserDto.email,
       password: createUserDto.password,
     });
@@ -82,30 +91,30 @@ describe('UsersController', () => {
     expect(result.accessToken).toBeDefined();
   });
 
-  it('should throw an Unauthorized exception with an invalid email', async () => {
-    await controller.createUser(createUserDto);
+  it('should throw UnauthorizedException with an invalid email', async () => {
+    await usersController.createUser(createUserDto);
 
     await expect(
-      controller.signin({
+      usersController.signin({
         email: 'unknown@naver.com',
         password: createUserDto.password,
       }),
     ).rejects.toThrowError(UnauthorizedException);
   });
 
-  it('should throw an Unauthorized exception with an invalid password', async () => {
-    await controller.createUser(createUserDto);
+  it('should throw UnauthorizedException with an invalid password', async () => {
+    await usersController.createUser(createUserDto);
 
     await expect(
-      controller.signin({ email: createUserDto.email, password: '1234' }),
+      usersController.signin({ email: createUserDto.email, password: '1234' }),
     ).rejects.toThrowError(UnauthorizedException);
   });
 
-  it('should throw an Unauthorized exception with an invalid email and invalid password', async () => {
-    await controller.createUser(createUserDto);
+  it('should throw UnauthorizedException with an invalid email and invalid password', async () => {
+    await usersController.createUser(createUserDto);
 
     await expect(
-      controller.signin({ email: 'unknown@naver.com', password: '1234' }),
+      usersController.signin({ email: 'unknown@naver.com', password: '1234' }),
     ).rejects.toThrowError(UnauthorizedException);
   });
 });
