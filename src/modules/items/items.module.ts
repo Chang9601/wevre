@@ -17,5 +17,6 @@ import { Material, MaterialSchema } from '../../entities/material.entity';
   ],
   controllers: [ItemsController],
   providers: [ItemsService, ItemsRepository],
+  exports: [ItemsRepository],
 })
 export class ItemsModule {}
