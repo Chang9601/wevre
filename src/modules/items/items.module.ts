@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+
 import { ItemsController } from './items.controller';
 import { ItemsService } from './items.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Item, ItemSchema } from '../../entities/item.entity';
 import { ItemsRepository } from './items.repository';
+import { Item, ItemSchema } from '../../entities/item.entity';
 import { Category, CategorySchema } from '../../entities/category.entity';
 import { Material, MaterialSchema } from '../../entities/material.entity';
 
@@ -17,5 +18,6 @@ import { Material, MaterialSchema } from '../../entities/material.entity';
   ],
   controllers: [ItemsController],
   providers: [ItemsService, ItemsRepository],
+  exports: [ItemsRepository],
 })
 export class ItemsModule {}

@@ -37,6 +37,13 @@ lerna-debug.log*
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,vim,webstorm,macos,linux,windows,zsh,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,vim,webstorm,macos,linux,windows,zsh,node
 
+.idea
+.env.development
+.env.test
+.env.production
+db/schema.sql
+*.rdb
+
 ### Linux ###
 *~
 

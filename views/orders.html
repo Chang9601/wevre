@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>주문 목록</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      header {
+        background-color: #333;
+        color: white;
+        text-align: center;
+        padding: 10px;
+        width: 100%;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .order-container {
+        border: 1px solid #ccc;
+        margin: 10px;
+        padding: 10px;
+        text-align: center;
+      }
+
+      #status-message,
+      #auth-message {
+        text-align: center;
+        color: red;
+        margin-top: 10px;
+      }
+
+      #order-list {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .pagination {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>주문 목록</h1>
+    </header>
+    <div class="container">
+      <label for="orders-per-page">페이지 당 주문 개수: </label>
+      <input type="number" id="orders-per-page" value="10" />
+      <button id="update-orders-per-page">수정</button>
+
+      <ul id="order-list"></ul>
+      <div class="pagination">
+        <button id="previous-page">이전</button>
+        <button id="next-page">다음</button>
+      </div>
+      <p id="total-orders"></p>
+
+      <p id="status-message"></p>
+
+      <div class="back-link">
+        <a href="#" onclick="goHome()">홈으로</a>
+      </div>
+    </div>
+
+    <p id="auth-message"></p>
+
+    <script src="./common.js"></script>
+
+    <script>
+      const authMessage = document.getElementById('auth-message');
+      const statusMessage = document.getElementById('status-message');
+
+      function goHome() {
+        window.location.href = 'index.html';
+      }
+
+      function isNumeric(input) {
+        return /^[1-9][0-9]*$/.test(input);
+      }
+
+      async function isAuthenticated() {
+        const response = await fetch('/auth/whoami');
+        const status = response.status;
+
+        return status === 200 ? true : false;
+      }
+
+      function getQueryParams() {
+        const queryParams = {};
+        const queryString = window.location.search.slice(1);
+        const paramPairs = queryString.split('&');
+
+        paramPairs.forEach((pair) => {
+          const [key, value] = pair.split('=');
+          queryParams[key] = decodeURIComponent(value);
+        });
+
+        return queryParams;
+      }
+
+      async function deleteOrder(id) {
+        try {
+          const response = await fetch(`/orders/${id}`, { method: 'DELETE' });
+          const status = response.status;
+
+          if (status === 204) {
+            statusMessage.textContent = '주문 삭제 완료';
+          } else if (status === 404) {
+            throw new Error(404);
+          } else if (status === 500) {
+            throw new Error(500);
+          }
+        } catch (error) {
+          const { message } = error;
+
+          if (message === '404') {
+            statusMessage.textContent = '존재하지 않는 주문';
+          } else if (message === '500') {
+            statusMessage.textContent = '오류 발생';
+          }
+        }
+      }
+
+      const queryParams = getQueryParams();
+
+      let currentPage = parseInt(queryParams.offset) || 1;
+      let ordersPerPage = parseInt(queryParams.limit) || 10;
+
+      async function fetchOrders(offset, limit) {
+        try {
+          const response = await fetch(
+            `/orders?offset=${offset}&limit=${limit}`,
+          );
+          const status = response.status;
+
+          if (status === 401) {
+            throw new Error(401);
+          } else if (status === 404) {
+            throw new Error(404);
+          } else if (status === 500) {
+            throw new Error(500);
+          }
+
+          const data = await response.json();
+
+          const orders = data.orders;
+          const state = data.pageState;
+
+          const orderList = document.getElementById('order-list');
+          orderList.innerHTML = '';
+
+          orders.forEach(async (order) => {
+            const {
+              totalPrice,
+              totalQuantity,
+              streetAddress,
+              address,
+              zipcode,
+              orderNumber,
+              orderDate,
+            } = order;
+
+            const orderContainer = document.createElement('div');
+            orderContainer.classList.add('order-container');
+
+            const listOrder = document.createElement('li');
+            listOrder.innerHTML = `
+        <p>주문번호: ${orderNumber}</p>
+        <p>주문날짜: ${orderDate}</p>
+        <p>총액: ${totalPrice}원</p>
+        <p>총수량: ${totalQuantity}개</p>
+        <p>도로명 주소: ${streetAddress}</p>
+        <p>상세 주소: ${address}</p>
+        <p>우편번호: ${zipcode}</p>
+      `;
+            const button = document.createElement('button');
+            let url;
+
+            button.textContent = '경매방';
+            button.addEventListener('click', async () => {
+              url = `detail.html?itemId=${encodeURIComponent(
+                itemId,
+              )}&itemName=${encodeURIComponent(
+                itemName,
+              )}&initialorder=${encodeURIComponent(
+                initialorder,
+              )}&startDate=${encodeURIComponent(
+                startDate,
+              )}&endDate=${encodeURIComponent(endDate)}`;
+
+              window.location.href = url;
+            });
+
+            listOrder.appendChild(button);
+
+            orderContainer.appendChild(listOrder);
+            orderList.appendChild(orderContainer);
+          });
+
+          const previousPageButton = document.getElementById('previous-page');
+          const nextPageButton = document.getElementById('next-page');
+          const totalOrdersElement = document.getElementById('total-orders');
+
+          previousPageButton.disabled = !state.isPreviousPageValid;
+          nextPageButton.disabled = !state.isNextPageValid;
+
+          currentPage = state.currentPage;
+          const total = state.total;
+
+          totalOrdersElement.textContent = `주문 개수: ${total}`;
+        } catch (error) {
+          const { message } = error;
+
+          if (message === '401') {
+            statusMessage.textContent = '로그인 필요';
+          } else if (message === '404') {
+            statusMessage.textContent = '빈 주문';
+            document.getElementById('order-link').style.display = 'none';
+          } else if (message === '500') {
+            statusMessage.textContent = '오류 발생';
+          } else {
+            statusMessage.textContent = '네트워크 오류 발생';
+          }
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', async function () {
+        const formContainer = document.querySelector('.container');
+
+        const authenticated = await isAuthenticated();
+
+        if (!authenticated) {
+          formContainer.style.display = 'none';
+          window.location.href = 'signin.html';
+        }
+      });
+
+      document
+        .getElementById('update-orders-per-page')
+        .addEventListener('click', () => {
+          const newOrdersPerPage = parseInt(
+            document.getElementById('orders-per-page').value,
+            10,
+          );
+
+          if (isNumeric(newOrdersPerPage)) {
+            ordersPerPage = newOrdersPerPage;
+            currentPage = 1;
+            fetchOrders(currentPage, ordersPerPage);
+          }
+        });
+
+      document.getElementById('previous-page').addEventListener('click', () => {
+        fetchOrders(currentPage - 1, ordersPerPage);
+      });
+      document.getElementById('next-page').addEventListener('click', () => {
+        fetchOrders(currentPage + 1, ordersPerPage);
+      });
+
+      fetchOrders(currentPage, ordersPerPage);
+    </script>
+  </body>
+</html>

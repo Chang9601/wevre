@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회원가입</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      .container {
+        width: 300px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      label,
+      input[type='name'],
+      input[type='email'],
+      input[type='password'],
+      input[type='submit'] {
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 250px;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+      }
+
+      input[type='submit'] {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+      }
+
+      input[type='submit']:hover {
+        background-color: #0056b3;
+      }
+
+      #status-message {
+        text-align: center;
+        color: red;
+        margin-top: 10px;
+      }
+
+      .back-link {
+        text-align: center;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>회원가입</h1>
+      <form id="signup-form">
+        <label for="name">이름</label>
+        <input type="name" id="name" name="name" value="홍길동" required />
+
+        <label for="email">이메일</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          value="kildong11@naver.com"
+          required
+        />
+
+        <label for="password">비밀번호</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          value="5328921@#aA"
+          required
+        />
+
+        <input type="submit" value="회원가입" />
+      </form>
+
+      <p id="status-message"></p>
+
+      <div class="back-link">
+        <a href="#" onclick="goHome()">홈으로</a>
+      </div>
+    </div>
+
+    <script src="./common.js"></script>
+
+    <script>
+      function goHome() {
+        window.location.href = 'index.html';
+      }
+
+      document
+        .getElementById('signup-form')
+        .addEventListener('submit', async function (event) {
+          event.preventDefault();
+          const name = document.getElementById('name').value;
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('password').value;
+
+          const statusMessage = document.getElementById('status-message');
+
+          try {
+            const response = await fetch('/auth/signup', {
+              method: 'POST',
+              body: JSON.stringify({
+                name,
+                email,
+                password,
+              }),
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            const status = response.status;
+
+            if (status === 201) {
+              statusMessage.textContent = '회원가입 완료';
+              await fetch('/auth/signin', {
+                method: 'POST',
+                body: JSON.stringify({ email, password }),
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+              });
+
+              window.location.href = 'index.html';
+            } else if (status === 400) {
+              throw new Error(400);
+            } else if (status === 409) {
+              throw new Error(409);
+            } else {
+              throw new Error(500);
+            }
+          } catch (error) {
+            const { message } = error;
+
+            if (message === '400') {
+              statusMessage.textContent =
+                '이름은 적어도 세 개의 한글(가-힣)만, 유효한 이메일 주소 형식(예: example@example.com), 비밀번호는 8자에서 15자 사이며 하나의 소문자, 대문자, 숫자, 특수 문자 (!@#$%^&*)를 포함';
+            } else if (message === '409') {
+              statusMessage.textContent = '이미 사용 중인 이메일';
+            } else if (message === '500') {
+              statusMessage.textContent = '오류 발생';
+            } else {
+              statusMessage.textContent = '네트워크 오류 발생';
+            }
+          }
+        });
+    </script>
+  </body>
+</html>
