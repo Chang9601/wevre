@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
-import { User } from './user.entity';
 import { Type } from 'class-transformer';
+
+import { User } from './user.entity';
 import { Category } from './category.entity';
 import { Material } from './material.entity';
 
@@ -46,27 +47,29 @@ export class Item extends Document {
   @Prop({ required: true, default: false })
   auctionStatus: boolean;
 
-  @Prop({ type: Date, default: Date.now })
+  @Prop({ default: Date.now })
   updatedAt: Date;
 
-  @Prop({ type: Date, default: Date.now })
+  @Prop({ default: Date.now })
   createdAt: Date;
 
-  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: User.name })
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
   @Type(() => User)
   seller: User;
 
   @Prop({
     required: true,
     type: MongooseSchema.Types.ObjectId,
-    ref: Category.name,
+    ref: 'Category',
   })
   @Type(() => Category)
   category: Category;
 
+  // 다대다(M:N, 상품:재료) 관계.
+  // type 속성과 ref 속성이 배열([]) 속에 있다.
   @Prop({
     required: true,
-    type: [{ type: MongooseSchema.Types.ObjectId, ref: Material.name }],
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Material' }],
   })
   @Type(() => Material)
   materials: Material[];

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>로그인</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      .container {
+        width: 300px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        margin: 0 0 20px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      label,
+      input[type='email'],
+      input[type='password'],
+      input[type='submit'] {
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 250px;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+      }
+
+      input[type='submit'] {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+      }
+
+      input[type='submit']:hover {
+        background-color: #0056b3;
+      }
+
+      #status-message {
+        text-align: center;
+        color: red;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>로그인</h1>
+      <form id="signin-form">
+        <label for="email">이메일</label>
+        <input type="email" id="email" name="email" required />
+
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" required />
+
+        <input type="submit" value="로그인" />
+      </form>
+
+      <p id="status-message"></p>
+
+      <div class="back-link">
+        <a href="#" onclick="goHome()">홈으로</a>
+      </div>
+    </div>
+
+    <script src="./common.js"></script>
+
+    <script>
+      function goHome() {
+        window.location.href = 'index.html';
+      }
+
+      document
+        .getElementById('signin-form')
+        .addEventListener('submit', async function (event) {
+          event.preventDefault();
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('password').value;
+
+          const statusMessage = document.getElementById('status-message');
+
+          try {
+            const response = await fetch('/auth/signin', {
+              method: 'POST',
+              body: JSON.stringify({ email, password }),
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+            });
+            const status = response.status;
+
+            if (status === 200) {
+              statusMessage.textContent = '로그인 완료';
+              window.location.href = 'index.html';
+            } else if (status === 400) {
+              throw new Error(400);
+            } else {
+              throw new Error(500);
+            }
+          } catch (error) {
+            const { message } = error;
+
+            if (message === '400') {
+              statusMessage.textContent = '잘못된 이메일 혹은 잘못된 비밀번호';
+            } else if (message === '500') {
+              statusMessage.textContent = '오류 발생';
+            } else {
+              statusMessage.textContent = '네트워크 오류 발생';
+            }
+          }
+        });
+    </script>
+  </body>
+</html>

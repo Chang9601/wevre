@@ -1,0 +1,105 @@
+services:
+  app:
+    container_name: wevre-app
+    image: wevre
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: dev
+    command: sh -c '/wait && npm run start:dev'
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/opt/node_app/app
+      - ./package.json:/opt/node_app/package.json
+      - ./package-lock.json:/opt/node_app/package-lock.json
+    environment:
+      - NODE_ENV=development
+      - HOST=localhost
+      - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=27017
+      - DB_DATABASE=wevre
+      # mongo-init.js 파일에서 wevre 데이터베이스에 해당하는 사용자와 비밀번호를 생성한다.
+      - DB_USERNAME=csup
+      - DB_PASSWORD=csup
+      - DB_LOGGING=true
+      - JWT_ACCESS_TOKEN_SECRET=wevre-jwt-access-token
+      - JWT_ACCESS_TOKEN_EXPIRATION=1800000
+      - JWT_REFRESH_TOKEN_SECRET=wevre-jwt-refresh-token
+      - JWT_REFRESH_TOKEN_EXPIRATION=86400000
+      - CACHE_TTL=120
+      - CACHE_MAX=1000
+      - REDIS_HOST=cache
+      - REDIS_PORT=6379
+      - WAIT_HOSTS=db:27017
+      - WAIT_TIMEOUT=600
+      - WAIT_SLEEP_INTERVAL=10
+      - WAIT_HOST_CONNECT_TIMEOUT=10
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+
+  db:
+    container_name: wevre-db
+    image: mongo:6.0.7
+    ports:
+      - '27017:27017'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+      - MONGO_INITDB_DATABASE=wevre
+    volumes:
+      - ./seed/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - db:/data/db
+    healthcheck:
+      test: '[ `echo ''db.runCommand("ping").ok'' | mongo localhost/wevre --quiet` ] && echo 0 || echo 1'
+      interval: 5s
+      timeout: 4s
+      retries: 5
+      start_period: 5m
+
+  db-express:
+    container_name: wevre-express
+    image: mongo-express:1.0.2-20
+    ports:
+      - '8082:8081'
+    environment:
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_MONGODB_SERVER=db
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH_USERNAME=user
+      - ME_CONFIG_BASICAUTH_PASSWORD=user
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=root
+
+  seed:
+    container_name: wevre-seed
+    image: seed
+    build:
+      dockerfile: Dockerfile
+      # context는 Dockerfile이 포함된 디렉터리의 경로를 정의한다.
+      # 상대 경로인 경우 Compose 파일의 위치를 기준으로 해석된다.
+      # 명시적으로 설정되지 않으면 context는 프로젝트 디렉터리(.)로 기본 설정된다.
+      context: ./seed
+
+  cache:
+    container_name: wevre-cache
+    image: redis:7.2.4-alpine
+    ports:
+      - '6379:6379'
+
+  cache-commander:
+    container_name: wevre-cache-commander
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:cache:6379
+    ports:
+      - '8081:8081'
+    depends_on:
+      - cache
+
+volumes:
+  db:

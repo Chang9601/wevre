@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>입찰 목록</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      header {
+        background-color: #333;
+        color: white;
+        text-align: center;
+        padding: 10px;
+        width: 100%;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .bid-container {
+        border: 1px solid #ccc;
+        margin: 10px;
+        padding: 10px;
+        text-align: center;
+      }
+
+      #status-message,
+      #auth-message {
+        text-align: center;
+        color: red;
+        margin-top: 10px;
+      }
+
+      #bid-list {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .pagination {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>입찰 목록</h1>
+    </header>
+    <div class="container">
+      <label for="bids-per-page">페이지 당 입찰 개수: </label>
+      <input type="number" id="bids-per-page" value="10" />
+      <button id="update-bids-per-page">수정</button>
+
+      <ul id="bid-list"></ul>
+      <div class="pagination">
+        <button id="previous-page">이전</button>
+        <button id="next-page">다음</button>
+      </div>
+      <p id="total-bids"></p>
+
+      <p id="status-message"></p>
+
+      <div class="back-link">
+        <a href="#" onclick="goHome()">홈으로</a>
+        <a href="#" id="order-link" onclick="goOrder()">주문하기</a>
+      </div>
+    </div>
+
+    <p id="auth-message"></p>
+
+    <script src="./common.js"></script>
+
+    <script>
+      const authMessage = document.getElementById('auth-message');
+      const statusMessage = document.getElementById('status-message');
+
+      function goHome() {
+        window.location.href = 'index.html';
+      }
+
+      function goOrder() {
+        window.location.href = 'order.html';
+      }
+
+      function isNumeric(input) {
+        return /^[1-9][0-9]*$/.test(input);
+      }
+
+      async function isAuthenticated() {
+        const response = await fetch('/auth/whoami');
+        const status = response.status;
+
+        return status === 200 ? true : false;
+      }
+
+      function getQueryParams() {
+        const queryParams = {};
+        const queryString = window.location.search.slice(1);
+        const paramPairs = queryString.split('&');
+
+        paramPairs.forEach((pair) => {
+          const [key, value] = pair.split('=');
+          queryParams[key] = decodeURIComponent(value);
+        });
+
+        return queryParams;
+      }
+
+      async function deleteBid(id) {
+        try {
+          const response = await fetch(`/bids/${id}`, { method: 'DELETE' });
+          const status = response.status;
+
+          if (status === 204) {
+            statusMessage.textContent = '입찰 삭제 완료';
+          } else if (status === 404) {
+            throw new Error(404);
+          } else if (status === 500) {
+            throw new Error(500);
+          }
+        } catch (error) {
+          const { message } = error;
+
+          if (message === '404') {
+            statusMessage.textContent = '존재하지 않는 입찰';
+          } else if (message === '500') {
+            statusMessage.textContent = '오류 발생';
+          }
+        }
+      }
+
+      const queryParams = getQueryParams();
+
+      let currentPage = parseInt(queryParams.offset) || 1;
+      let bidsPerPage = parseInt(queryParams.limit) || 10;
+
+      async function fetchBids(offset, limit) {
+        try {
+          const response = await fetch(`/bids?offset=${offset}&limit=${limit}`);
+          const status = response.status;
+
+          if (status === 401) {
+            throw new Error(401);
+          } else if (status === 404) {
+            throw new Error(404);
+          } else if (status === 500) {
+            throw new Error(500);
+          }
+
+          const data = await response.json();
+
+          const bids = data.bids;
+          const state = data.pageState;
+
+          const bidList = document.getElementById('bid-list');
+          bidList.innerHTML = '';
+
+          bids.forEach(async (bid) => {
+            const {
+              bidId,
+              price,
+              initialBid,
+              auctionStatus,
+              itemId,
+              itemName,
+              startDate,
+              endDate,
+            } = bid;
+
+            const bidContainer = document.createElement('div');
+            bidContainer.classList.add('bid-container');
+
+            const listBid = document.createElement('li');
+            listBid.innerHTML = `
+        <p>작품명: ${itemName}</p>
+        <p>입찰가: ${price}원</p>
+        <p>시작 날짜: ${startDate}</p>
+        <p>종료 날짜: ${endDate}</p>
+      `;
+            const button = document.createElement('button');
+            let url;
+
+            if (auctionStatus) {
+              button.textContent = '경매방';
+              button.addEventListener('click', async () => {
+                url = `detail.html?itemId=${encodeURIComponent(
+                  itemId,
+                )}&itemName=${encodeURIComponent(
+                  itemName,
+                )}&initialBid=${encodeURIComponent(
+                  initialBid,
+                )}&startDate=${encodeURIComponent(
+                  startDate,
+                )}&endDate=${encodeURIComponent(endDate)}`;
+
+                window.location.href = url;
+              });
+            } else {
+              button.textContent = '낙찰!';
+              button.style.backgroundColor = 'red';
+              button.style.color = 'white';
+              button.style.border = 'none';
+              button.style.padding = '10px 20px';
+            }
+
+            listBid.appendChild(button);
+
+            bidContainer.appendChild(listBid);
+            bidList.appendChild(bidContainer);
+          });
+
+          const previousPageButton = document.getElementById('previous-page');
+          const nextPageButton = document.getElementById('next-page');
+          const totalBidsElement = document.getElementById('total-bids');
+
+          previousPageButton.disabled = !state.isPreviousPageValid;
+          nextPageButton.disabled = !state.isNextPageValid;
+
+          currentPage = state.currentPage;
+          const total = state.total;
+
+          totalBidsElement.textContent = `입찰 개수: ${total}`;
+        } catch (error) {
+          const { message } = error;
+
+          if (message === '401') {
+            statusMessage.textContent = '로그인 필요';
+          } else if (message === '404') {
+            statusMessage.textContent = '빈 입찰';
+            document.getElementById('order-link').style.display = 'none';
+          } else if (message === '500') {
+            statusMessage.textContent = '오류 발생';
+          } else {
+            statusMessage.textContent = '네트워크 오류 발생';
+          }
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', async function () {
+        const formContainer = document.querySelector('.container');
+
+        const authenticated = await isAuthenticated();
+
+        if (!authenticated) {
+          formContainer.style.display = 'none';
+          window.location.href = 'signin.html';
+        }
+      });
+
+      document
+        .getElementById('update-bids-per-page')
+        .addEventListener('click', () => {
+          const newBidsPerPage = parseInt(
+            document.getElementById('bids-per-page').value,
+            10,
+          );
+
+          if (isNumeric(newBidsPerPage)) {
+            bidsPerPage = newBidsPerPage;
+            currentPage = 1;
+            fetchBids(currentPage, bidsPerPage);
+          }
+        });
+
+      document.getElementById('previous-page').addEventListener('click', () => {
+        fetchBids(currentPage - 1, bidsPerPage);
+      });
+      document.getElementById('next-page').addEventListener('click', () => {
+        fetchBids(currentPage + 1, bidsPerPage);
+      });
+
+      fetchBids(currentPage, bidsPerPage);
+    </script>
+  </body>
+</html>

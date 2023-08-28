@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>주문하기</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      .container {
+        width: 300px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      label,
+      input[type='street-address'],
+      input[type='address'],
+      input[type='zipcode'] {
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 250px;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+      }
+
+      input[type='submit'] {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px;
+        border-radius: 4px;
+        width: 250px;
+        box-sizing: border-box;
+        margin-top: 10px;
+      }
+
+      input[type='submit']:hover {
+        background-color: #0056b3;
+      }
+
+      #status-message,
+      #auth-message {
+        text-align: center;
+        color: red;
+        margin-top: 10px;
+      }
+
+      .back-link {
+        text-align: center;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>주문하기</h1>
+      <form id="order-form">
+        <label for="street-address">도로명 주소</label>
+        <input
+          type="street-address"
+          id="street-address"
+          name="street-address"
+          value="부산광역시 기장군 일광읍 기장대로 692"
+          required
+        />
+
+        <label for="address">상세 주소</label>
+        <input
+          type="address"
+          id="address"
+          name="address"
+          value="4층 정장계"
+          required
+        />
+
+        <label for="zipcode"> 우편번호</label>
+        <input
+          type="zipcode"
+          id="zipcode"
+          name="zipcode"
+          value="46044"
+          required
+        />
+
+        <input type="submit" value="주문하기" />
+      </form>
+
+      <p id="status-message"></p>
+
+      <div class="back-link">
+        <a href="#" onclick="goBack()">이전으로</a>
+        <a href="#" onclick="goHome()">홈으로</a>
+      </div>
+    </div>
+
+    <p id="auth-message"></p>
+
+    <script src="./common.js"></script>
+
+    <script>
+      const authMessage = document.getElementById('auth-message');
+      const statusMessage = document.getElementById('status-message');
+
+      function goBack() {
+        window.history.back();
+      }
+
+      function goHome() {
+        window.location.href = 'index.html';
+      }
+
+      async function isAuthenticated() {
+        const response = await fetch('/auth/whoami');
+        const status = response.status;
+
+        return status === 200 ? true : false;
+      }
+
+      document.addEventListener('DOMContentLoaded', async function () {
+        const formContainer = document.querySelector('.container');
+
+        const authenticated = await isAuthenticated();
+
+        if (!authenticated) {
+          formContainer.style.display = 'none';
+          window.location.href = 'signin.html';
+        }
+      });
+
+      document
+        .getElementById('order-form')
+        .addEventListener('submit', async function (event) {
+          event.preventDefault();
+          const streetAddress = document.getElementById('street-address').value;
+          const address = document.getElementById('address').value;
+          const zipcode = document.getElementById('zipcode').value;
+
+          try {
+            const response = await fetch('/orders', {
+              method: 'POST',
+              body: JSON.stringify({
+                streetAddress,
+                address,
+                zipcode,
+              }),
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            const status = response.status;
+
+            if (status === 201) {
+              statusMessage.textContent = '주문하기 완료';
+              const data = await response.json();
+
+              window.location.href = 'orders.html';
+            } else if (status === 401) {
+              throw new Error(401);
+            } else if (status === 404) {
+              throw new Error(404);
+            } else {
+              throw new Error(500);
+            }
+          } catch (error) {
+            const { message } = error;
+
+            if (message === '401') {
+              statusMessage.textContent = '로그인 필요';
+            } else if (message === '404') {
+              statusMessage.textContent = '빈 입찰';
+            } else if (message === '500') {
+              statusMessage.textContent = '오류 발생';
+            } else {
+              statusMessage.textContent = '네트워크 오류 발생';
+            }
+          }
+        });
+    </script>
+  </body>
+</html>

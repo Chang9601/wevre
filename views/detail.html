@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>작품 상세</title>
+    <script
+      src="https://cdn.socket.io/4.6.0/socket.io.min.js"
+      integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      #bids {
+        height: 400px;
+        overflow: scroll;
+        width: 90%;
+        max-width: 600px;
+      }
+
+      #bid-box {
+        display: block;
+        width: 90%;
+        margin-bottom: 10px;
+        padding: 10px;
+        max-width: 600px;
+      }
+
+      #send,
+      #leave {
+        width: 90%;
+        height: 30px;
+        max-width: 600px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1></h1>
+
+    <div id="bid-info-section">
+      <div id="bid-info"></div>
+      <div id="initial-bid-display"></div>
+    </div>
+
+    <pre id="bids"></pre>
+    <input type="text" id="bid-box" placeholder="입찰 가격 입력" />
+    <button id="send" title="send">입찰</button>
+    <button id="leave" title="leave">나가기</button>
+    <div id="initial-bid-display"></div>
+
+    <script src="./common.js"></script>
+
+    <script>
+      function isNumeric(input) {
+        return /^[1-9][0-9]*$/.test(input);
+      }
+
+      function getQueryParams() {
+        const queryParams = {};
+        const queryString = window.location.search.slice(1);
+        const paramPairs = queryString.split('&');
+        paramPairs.forEach((pair) => {
+          const [key, value] = pair.split('=');
+          queryParams[key] = decodeURIComponent(value);
+        });
+        return queryParams;
+      }
+
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+
+        if (parts.length === 2) {
+          return parts.pop().split(';').shift();
+        }
+
+        return null;
+      }
+
+      const queryParams = getQueryParams();
+      const itemId = queryParams.itemId;
+      const itemName = queryParams.itemName;
+      const initialBid = queryParams.initialBid;
+      const startDate = queryParams.startDate;
+      const endDate = queryParams.endDate;
+      const offset = queryParams.offset;
+      const limit = queryParams.limit;
+
+      if (itemName) {
+        const h1Element = document.querySelector('h1');
+        h1Element.innerHTML = `${itemName} 실시간 경매방<br>시작: ${startDate}<br>종료: ${endDate}`;
+      }
+
+      const bidInfoSection = document.querySelector('#bid-info-section');
+
+      const initialBidDisplay = document.createElement('div');
+      initialBidDisplay.innerHTML = `최저 입찰가: <span style="font-weight: bold; color: red;">${initialBid}원</span>`;
+      bidInfoSection.appendChild(initialBidDisplay);
+    </script>
+
+    <script>
+      function showBid(bid) {
+        if (bid === undefined) {
+          return;
+        }
+        bids.textContent += `\n\n${bid}`;
+        bids.scrollTop = bids.scrollHeight;
+        bidBox.value = '';
+      }
+
+      function showError(message) {
+        const centerElement = document.createElement('div');
+        centerElement.style.textAlign = 'center';
+        const errorElement = document.createElement('div');
+        errorElement.textContent = message;
+        errorElement.style.color = 'red';
+
+        const existingErrorElement = document.querySelector('#centered-error');
+        if (existingErrorElement) {
+          existingErrorElement.remove();
+        }
+
+        errorElement.id = 'error-message';
+        centerElement.id = 'centered-error';
+        centerElement.appendChild(errorElement);
+
+        const bidsContainer = document.querySelector('#bids');
+        bidsContainer.insertAdjacentElement('afterend', centerElement);
+      }
+
+      async function getHighestBid(itemId) {
+        const response = await fetch(`/bids/${itemId}`);
+        const bid = await response.json();
+
+        return bid;
+      }
+
+      async function showBidStatus() {
+        try {
+          const bid = await getHighestBid(itemId);
+
+          if (bid.hasOwnProperty('statusCode')) {
+            throw new Error('상품에 해당하는 경매방 없음');
+          }
+
+          const price = bid.price;
+          const name = bid.name;
+          const email = bid.email;
+
+          const bidInfo =
+            price === 0
+              ? `입찰 없음`
+              : `최고 입찰가: ${price}원 - ${name}(${email})`;
+
+          const centerElement = document.createElement('div');
+          centerElement.style.textAlign = 'center';
+          const bidInfoElement = document.createElement('div');
+          bidInfoElement.textContent = bidInfo;
+          bidInfoElement.style.fontWeight = 'bold';
+
+          const existingCenterElement =
+            document.querySelector('#centered-bid-info');
+          if (existingCenterElement) {
+            existingCenterElement.remove();
+          }
+
+          bidInfoElement.id = 'bid-info';
+          centerElement.id = 'centered-bid-info';
+          centerElement.appendChild(bidInfoElement);
+
+          const h1Element = document.querySelector('h1');
+          h1Element.insertAdjacentElement('afterend', centerElement);
+        } catch (error) {
+          showError('경매방 없음');
+        }
+      }
+
+      const sendButton = document.querySelector('#send');
+      const leaveButton = document.querySelector('#leave');
+      const bids = document.querySelector('#bids');
+      const bidBox = document.querySelector('#bid-box');
+
+      const accessToken = getCookie('access_token');
+      const socketSessionId = getCookie('socket_session_id');
+      let isConnected = false;
+      let _roomId;
+      let _socket;
+
+      sendButton.onclick = async function () {
+        if (isConnected) {
+          const bid = bidBox.value.trim();
+
+          if (isNumeric(bid)) {
+            const highestBid = await getHighestBid(itemId);
+
+            if (bid < initialBid) {
+              showError('최저 입찰가보다 높은 입찰만 가능');
+              return;
+            }
+
+            if (highestBid.price >= bid) {
+              showError('최고 입찰가보다 높은 입찰만 가능');
+              return;
+            }
+
+            _socket.emit('bid', {
+              price: bid,
+              socketSessionId: socketSessionId,
+              itemId: itemId,
+              roomId: _roomId,
+            });
+          } else {
+            showError('숫자만 입력 가능');
+          }
+        } else {
+          showError('실시간 연결 안됨');
+        }
+      };
+
+      leaveButton.onclick = function () {
+        if (isConnected) {
+          _socket.emit('leave', { _roomId });
+        }
+
+        let url = 'items.html';
+
+        if (offset && limit) {
+          url += `?offset=${offset}&limit=${limit}`;
+        }
+
+        window.location.href = url;
+      };
+
+      async function manageSocket(itemId) {
+        try {
+          const response = await fetch(`/rooms/${itemId}`);
+          const data = await response.json();
+
+          const roomId = data._id;
+          _roomId = roomId;
+
+          const socket = io(`/`, {
+            withCredentials: true,
+            extraHeaders: {
+              access_token: accessToken,
+              socket_session_id: socketSessionId,
+            },
+            query: {
+              item_id: itemId,
+              room_id: roomId,
+            },
+          });
+
+          socket.on('connect', () => {
+            console.log('웹소켓 연결 완료');
+            isConnected = true;
+          });
+
+          socket.on('join', (data) => {
+            showBid(data);
+          });
+
+          socket.on('leave', (data) => {
+            showBid(data);
+          });
+
+          socket.on('bid', async (data) => {
+            showBid(data);
+            console.log(data);
+            await showBidStatus();
+          });
+
+          socket.on('disconnect', () => {
+            console.log('웹소켓 연결 해제');
+          });
+
+          socket.on('error', (error) => {
+            if (error && error.message) {
+              if (error.message.startsWith('경매방')) {
+                showError('경매방 없음');
+              } else if (error.message.startsWith('상품')) {
+                showError('존재하지 않는 상품');
+              } else if (error.message.startsWith('입장')) {
+                showError('경매방 입장 중 오류가 발생');
+              } else if (error.message.startsWith('퇴장')) {
+                showError('경매방 퇴장 중 오류가 발생');
+              } else if (error.message.startsWith('입찰')) {
+                showError('입찰 중 오류가 발생');
+              } else {
+                showError('오류가 발생');
+              }
+            }
+          });
+
+          return socket;
+        } catch (error) {
+          showError('경매방 없음');
+        }
+      }
+
+      async function manageBid() {
+        await showBidStatus();
+        if (socketSessionId) {
+          const socket = await manageSocket(itemId);
+          _socket = socket;
+        } else {
+          showError('로그인 필요');
+        }
+      }
+
+      manageBid();
+    </script>
+  </body>
+</html>

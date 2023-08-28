@@ -1,44 +1,75 @@
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from '../../entities/user.entity';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import {
   ConflictException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
+import { Schema as MongooseSchema } from 'mongoose';
+import * as bcrypt from 'bcryptjs';
+
+import { User } from '../../entities/user.entity';
+import { MongoDbErrorCode } from '../../databases/mongodb-error-code.enum';
+import { CreateUserDto } from '../../dtos/create-user.dto';
 
 export class UsersRepository {
   constructor(
     @InjectModel(User.name) private readonly usersModel: Model<User>,
   ) {}
 
-  async create(name: string, email: string, password: string) {
-    let user = await this.findOne(email);
-
-    if (user) {
-      throw new ConflictException('User with this email already exists.');
-    }
-
+  async create(createUserDto: CreateUserDto): Promise<User> {
     try {
-      user = new this.usersModel({
-        name,
-        email,
-        password,
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
+      const roles = [createUserDto.role];
+
+      const user = new this.usersModel({
+        ...createUserDto,
+        password: hashedPassword,
+        roles: roles,
       });
 
-      user = await user.save();
-      return user._id;
+      return await user.save();
     } catch (error) {
-      throw new InternalServerErrorException('Error while saving user.');
+      if (error?.code === MongoDbErrorCode.DUPLICATE_KEY) {
+        throw new ConflictException('이메일 사용 중.');
+      }
+      throw new InternalServerErrorException('사용자 생성 중 오류 발생.');
     }
   }
 
-  async findOne(email: string): Promise<User> {
+  async update(
+    _id: MongooseSchema.Types.ObjectId,
+    updateUserDto: Partial<User>,
+  ): Promise<User> {
     try {
-      return await this.usersModel.findOne({ email });
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'Error while finding user by email.',
+      const updatedUser = await this.usersModel.findByIdAndUpdate(
+        { _id },
+        updateUserDto,
+        { new: true },
       );
+
+      return updatedUser;
+    } catch (error) {
+      throw new InternalServerErrorException('사용자 갱신 중 오류 발생.');
+    }
+  }
+
+  async findOne(filter: FilterQuery<User>): Promise<User> {
+    try {
+      const user = this.usersModel.findOne(filter).lean();
+
+      if (!user) {
+        throw new NotFoundException('사용자 없음.');
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('사용자 검색 중 오류 발생.');
     }
   }
 }
