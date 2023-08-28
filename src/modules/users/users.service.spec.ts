@@ -8,6 +8,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Schema as MongooseSchema } from 'mongoose';
 
 const name = '박선심';
 const email = 'sunshim@naver.com';
@@ -44,12 +45,21 @@ describe('UsersService', () => {
           throw new InternalServerErrorException('Error while saving a user.');
         }
       },
-      findOne: async (email: string) => {
+      findByEmail: async (email: string) => {
         try {
           return users.find((user) => user.email === email);
         } catch (error) {
           throw new InternalServerErrorException(
             'Error while find a user by email.',
+          );
+        }
+      },
+      findById: async (_id: MongooseSchema.Types.ObjectId) => {
+        try {
+          return users.find((user) => user._id === _id);
+        } catch (error) {
+          throw new InternalServerErrorException(
+            'Error while find a user by id.',
           );
         }
       },
@@ -96,10 +106,13 @@ describe('UsersService', () => {
     ).rejects.toThrowError(ConflictException);
   });
 
-  it('should return an access token after finding a user by email', async () => {
+  it('should find a user by email', async () => {
     await usersService.create(name, email, password);
-    const result = await usersService.signin(email, password);
+    const user = await usersService.findByEmail(email);
+  });
 
-    expect(result.accessToken).toBeDefined();
+  it('should find a user by id', async () => {
+    await usersService.create(name, email, password);
+    const user = await usersService.findByEmail(email);
   });
 });

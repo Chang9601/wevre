@@ -66,10 +66,10 @@ export class ItemsRepository {
     }
   }
 
-  async findOne(id: MongooseSchema.Types.ObjectId): Promise<Item> {
+  async findOne(_id: MongooseSchema.Types.ObjectId): Promise<Item> {
     try {
       const item = await this.itemsModel
-        .findOne({ _id: id })
+        .findOne({ _id })
         .populate('materials')
         .select(
           '-auctionStatus -category -seller -adminNumber -startDate -endDate -createdAt -updatedAt',

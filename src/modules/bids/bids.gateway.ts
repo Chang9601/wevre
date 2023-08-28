@@ -13,11 +13,13 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     const token = client.handshake.query;
+    console.log(token);
 
     throw new Error('Method not implemented.');
   }
 
   handleDisconnect(client: any) {
+    console.log(client);
     throw new Error('Method not implemented.');
   }
 }

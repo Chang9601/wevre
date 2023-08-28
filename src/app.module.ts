@@ -8,6 +8,7 @@ import { UsersModule } from './modules/users/users.module';
 import { ItemsModule } from './modules/items/items.module';
 import { BidsModule } from './modules/bids/bids.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { RoomsModule } from './modules/rooms/rooms.module';
     MongooseModule.forRootAsync({
       useClass: MongooseConfigService,
     }),
+    AuthModule,
     UsersModule,
     ItemsModule,
     BidsModule,

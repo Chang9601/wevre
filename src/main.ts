@@ -2,6 +2,7 @@ import { NestFactory /*Reflector*/ } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { /*ClassSerializerInterceptor*/ ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,9 @@ async function bootstrap() {
       skipMissingProperties: true, // PATCH 메서드와 같이 부분 수정 시 누락된 속성들을 생략하지만 모든 DTO에서 누락된 속성들을 생략할 수 있기 때문에 PATCH 업데이트할 때 모든 속성에 IsOptional을 추가
     }),
   );
+
+  // 쿠키를 읽기 쉬운 객체 형태로 파싱하는 미들웨어
+  app.use(cookieParser());
 
   // 직렬화(사용자에게 반환하기 전 응답 수정) 전역 설정
   // app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));

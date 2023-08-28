@@ -1,18 +1,11 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 import * as bcrypt from 'bcryptjs';
-import { JwtService } from '@nestjs/jwt';
+import { Schema as MongooseSchema } from 'mongoose';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    private readonly usersRepository: UsersRepository,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly usersRepository: UsersRepository) {}
 
   async create(name: string, email: string, password: string) {
     try {
@@ -26,18 +19,15 @@ export class UsersService {
     }
   }
 
-  async signin(email: string, password: string) {
-    const user = await this.usersRepository.findOne(email);
+  async findByEmail(email: string) {
+    const user = await this.usersRepository.findByEmail(email);
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const payload = { email };
-      const accessToken = this.jwtService.sign(payload);
+    return user;
+  }
 
-      return { accessToken };
-    }
+  async findById(id: MongooseSchema.Types.ObjectId) {
+    const user = await this.usersRepository.findById(id);
 
-    throw new UnauthorizedException(
-      'Authentication failed. Invalid email or password.',
-    );
+    return user;
   }
 }
