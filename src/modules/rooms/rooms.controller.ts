@@ -6,7 +6,7 @@ import { Schema as MongooseSchema } from 'mongoose';
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
-  @Post('/:id')
+  @Post('/items/:id')
   @HttpCode(HttpStatus.CREATED)
   async createRoom(@Param('id') id: MongooseSchema.Types.ObjectId) {
     const roomId = await this.roomsService.create(id);

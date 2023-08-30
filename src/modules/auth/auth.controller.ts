@@ -57,7 +57,7 @@ export class AuthController {
   @Post('/signout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  signout(@Req() _: RequestWithUser, @Res() res: Response) {
+  signout(@Res() res: Response) {
     res
       .cookie('token', '', {
         maxAge: 0,
@@ -65,11 +65,21 @@ export class AuthController {
       .send({ message: 'success' });
   }
 
-  @Get('/cookie')
+  @Get('/token')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
-  getCookie(@Req() req: RequestWithUser, @Res() res: Response) {
+  getToken(@Req() req: RequestWithUser) {
     const token = req.cookies.token;
-    return res.send(token);
+
+    return token;
+  }
+
+  @Get('/user')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  getUser(@Req() req: RequestWithUser) {
+    const user = req.user;
+
+    return user;
   }
 }

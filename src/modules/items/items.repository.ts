@@ -66,14 +66,24 @@ export class ItemsRepository {
     }
   }
 
-  async findOne(_id: MongooseSchema.Types.ObjectId): Promise<Item> {
+  async findOne(
+    _id: MongooseSchema.Types.ObjectId,
+    fullItem = false,
+  ): Promise<Item> {
     try {
-      const item = await this.itemsModel
-        .findOne({ _id })
-        .populate('materials')
-        .select(
-          '-auctionStatus -category -seller -adminNumber -startDate -endDate -createdAt -updatedAt',
-        );
+      const EXCLUDED_FIELDS =
+        '-auctionStatus -category -seller -adminNumber -startDate -endDate -createdAt -updatedAt';
+
+      let item: Item;
+
+      if (fullItem) {
+        item = await this.itemsModel.findOne({ _id });
+      } else {
+        item = await this.itemsModel
+          .findOne({ _id })
+          .populate('materials')
+          .select(EXCLUDED_FIELDS);
+      }
 
       if (!item) {
         throw new NotFoundException('Item with this id not found.');
@@ -81,9 +91,13 @@ export class ItemsRepository {
 
       return item;
     } catch (error) {
-      throw new InternalServerErrorException(
-        'Error while finding an itme by id.',
-      );
+      if (error instanceof NotFoundException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException(
+          'Error while finding an itme by id.',
+        );
+      }
     }
   }
 }

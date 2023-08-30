@@ -15,11 +15,11 @@ export class Message extends Document {
   @Prop({ type: Date, default: Date.now })
   createdAt: Date;
 
-  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: User.name })
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
   @Type(() => User)
   user: User;
 
-  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: Room.name })
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'Room' })
   @Type(() => Room)
   room: Room;
 }

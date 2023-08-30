@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RoomsRepository } from './rooms.repository';
+import { objectIdValidator } from '../../utils/objectid-validator';
 import { Schema as MongooseSchema } from 'mongoose';
 import { ItemsRepository } from '../items/items.repository';
 
@@ -11,8 +12,9 @@ export class RoomsService {
   ) {}
 
   async create(id: MongooseSchema.Types.ObjectId) {
-    const item = await this.itemsRepository.findOne(id);
+    objectIdValidator(id);
 
+    const item = await this.itemsRepository.findOne(id, true);
     return this.roomsRepository.create(item);
   }
 }

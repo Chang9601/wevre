@@ -13,13 +13,13 @@ export class UsersRepository {
   ) {}
 
   async create(name: string, email: string, password: string) {
-    let user = await this.findByEmail(email);
-
-    if (user) {
-      throw new ConflictException('User with this email already exists.');
-    }
-
     try {
+      let user = await this.findByEmail(email);
+
+      if (user) {
+        throw new ConflictException('User with this email already exists.');
+      }
+
       user = new this.usersModel({
         name,
         email,
@@ -29,7 +29,11 @@ export class UsersRepository {
       user = await user.save();
       return user._id;
     } catch (error) {
-      throw new InternalServerErrorException('Error while saving user.');
+      if (error instanceof ConflictException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException('Error while saving user.');
+      }
     }
   }
 

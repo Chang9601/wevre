@@ -52,21 +52,21 @@ export class Item extends Document {
   @Prop({ type: Date, default: Date.now })
   createdAt: Date;
 
-  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: User.name })
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
   @Type(() => User)
   seller: User;
 
   @Prop({
     required: true,
     type: MongooseSchema.Types.ObjectId,
-    ref: Category.name,
+    ref: 'Category',
   })
   @Type(() => Category)
   category: Category;
 
   @Prop({
     required: true,
-    type: [{ type: MongooseSchema.Types.ObjectId, ref: Material.name }],
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Material' }],
   })
   @Type(() => Material)
   materials: Material[];

@@ -1,15 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { Schema as MongooseSchema, Types } from 'mongoose';
+import { Injectable } from '@nestjs/common';
+import { Schema as MongooseSchema } from 'mongoose';
 import { ItemsRepository } from './items.repository';
+import { objectIdValidator } from '../../utils/objectid-validator';
 
 @Injectable()
 export class ItemsService {
   constructor(private readonly itemsRepository: ItemsRepository) {}
 
   async findOne(id: MongooseSchema.Types.ObjectId) {
-    if (!Types.ObjectId.isValid(id.toString())) {
-      throw new BadRequestException('Invalid ObjectId.');
-    }
+    objectIdValidator(id);
 
     return await this.itemsRepository.findOne(id);
   }
