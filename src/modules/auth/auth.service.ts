@@ -1,8 +1,12 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import TokenPayload from './interfaces/tokenPayload.interface';
+import TokenPayload from './interfaces/token-payload.interface';
 import { Schema as MongooseSchema } from 'mongoose';
 
 @Injectable()
@@ -33,5 +37,19 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
 
     return { token };
+  }
+
+  async verifyToken(token: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: process.env.JWT_SECRET,
+      });
+
+      return payload;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error while verifying JWT token.',
+      );
+    }
   }
 }

@@ -13,7 +13,7 @@ import {
 import { CreateUserDto } from '../../dtos/create-user.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import RequestWithUser from './interfaces/requestWithUser.interface';
+import RequestWithUser from './interfaces/request-with-user.interface';
 import { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
@@ -57,7 +57,7 @@ export class AuthController {
   @Post('/signout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  signout(@Res() res: Response) {
+  signout(@Res({ passthrough: true }) res: Response) {
     res
       .cookie('token', '', {
         maxAge: 0,
