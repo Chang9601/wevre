@@ -1,7 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsersService } from './users.service';
-import { UsersRepository } from './users.repository';
-import { User } from '../../entities/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import {
   ConflictException,
@@ -9,6 +6,10 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Schema as MongooseSchema } from 'mongoose';
+
+import { UsersService } from './users.service';
+import { UsersRepository } from './users.repository';
+import { User } from '../../entities/user.entity';
 
 const name = '박선심';
 const email = 'sunshim@naver.com';

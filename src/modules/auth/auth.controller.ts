@@ -10,12 +10,15 @@ import {
   UseGuards,
   //SerializeOptions,
 } from '@nestjs/common';
+import { Response } from 'express';
+
 import { CreateUserDto } from '../../dtos/create-user.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import RequestWithUser from './interfaces/request-with-user.interface';
-import { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import RolesGuard from './role/roles.guard';
+import Role from './role/role.enum';
 
 @Controller('auth')
 //@SerializeOptions({ 전역 설정 직렬화
@@ -58,16 +61,14 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
   signout(@Res({ passthrough: true }) res: Response) {
-    res
-      .cookie('token', '', {
-        maxAge: 0,
-      })
-      .send({ message: 'success' });
+    res.cookie('token', '', {
+      maxAge: 0,
+    });
   }
 
   @Get('/token')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard(Role.ADMIN))
   getToken(@Req() req: RequestWithUser) {
     const token = req.cookies.token;
 

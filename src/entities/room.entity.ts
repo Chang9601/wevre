@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { Item, ItemSchema } from './item.entity';
 import { Type } from 'class-transformer';
+
+import { Item, ItemSchema } from './item.entity';
 
 @Schema()
 export class Room extends Document {
@@ -17,10 +18,10 @@ export class Room extends Document {
   @Prop({ required: true })
   endDate: Date;
 
-  @Prop({ type: Date, default: Date.now })
+  @Prop({ default: Date.now })
   updatedAt: Date;
 
-  @Prop({ type: Date, default: Date.now })
+  @Prop({ default: Date.now })
   createdAt: Date;
 
   @Prop({ type: ItemSchema })

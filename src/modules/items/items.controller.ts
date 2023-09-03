@@ -6,8 +6,9 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { ItemsService } from './items.service';
 import { Schema as MongooseSchema } from 'mongoose';
+
+import { ItemsService } from './items.service';
 import { PaginationDto } from '../../dtos/pagination.dto';
 
 @Controller('items')

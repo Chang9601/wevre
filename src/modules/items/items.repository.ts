@@ -1,10 +1,11 @@
 import { InjectModel } from '@nestjs/mongoose';
-import { Item } from '../../entities/item.entity';
 import { Model, Schema as MongooseSchema } from 'mongoose';
 import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+
+import { Item } from '../../entities/item.entity';
 import { QueryBuilder } from '../../utils/query-builder';
 import { Category } from '../../entities/category.entity';
 

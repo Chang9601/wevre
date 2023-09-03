@@ -4,6 +4,8 @@ import {
   ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { Schema as MongooseSchema } from 'mongoose';
+
 import { Room } from '../../entities/room.entity';
 import { Item } from '../../entities/item.entity';
 
@@ -12,11 +14,11 @@ export class RoomsRepository {
     @InjectModel(Room.name) private readonly roomsModel: Model<Room>,
   ) {}
 
-  async create(item: Item) {
+  async create(item: Item, _id: MongooseSchema.Types.ObjectId) {
     try {
-      const { itemName, startDate, endDate, adminNumber } = item;
+      const { itemName, startDate, endDate } = item;
 
-      const duplicateItem = await this.findOne(adminNumber);
+      const duplicateItem = await this.findByItemId(_id);
 
       if (duplicateItem) {
         throw new ConflictException('Room with this item already exists.');
@@ -52,12 +54,20 @@ export class RoomsRepository {
     }
   }
 
-  async findOne(adminNumber: string) {
+  async findById(_id: MongooseSchema.Types.ObjectId): Promise<Room> {
     try {
-      return this.roomsModel.findOne({ 'item.adminNumber': adminNumber });
+      return this.roomsModel.findOne({ _id });
+    } catch (error) {
+      throw new InternalServerErrorException('Error while finding room by id.');
+    }
+  }
+
+  async findByItemId(_id: MongooseSchema.Types.ObjectId): Promise<Room> {
+    try {
+      return this.roomsModel.findOne({ 'item._id': _id });
     } catch (error) {
       throw new InternalServerErrorException(
-        'Error while finding room by administration number.',
+        'Error while finding room by item id.',
       );
     }
   }

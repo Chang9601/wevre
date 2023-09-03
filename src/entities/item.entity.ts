@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
-import { User } from './user.entity';
 import { Type } from 'class-transformer';
+
+import { User } from './user.entity';
 import { Category } from './category.entity';
 import { Material } from './material.entity';
 
@@ -46,10 +47,10 @@ export class Item extends Document {
   @Prop({ required: true, default: false })
   auctionStatus: boolean;
 
-  @Prop({ type: Date, default: Date.now })
+  @Prop({ default: Date.now })
   updatedAt: Date;
 
-  @Prop({ type: Date, default: Date.now })
+  @Prop({ default: Date.now })
   createdAt: Date;
 
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })

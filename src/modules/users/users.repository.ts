@@ -1,11 +1,12 @@
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from '../../entities/user.entity';
 import { Model } from 'mongoose';
 import {
   ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { Schema as MongooseSchema } from 'mongoose';
+
+import { User } from '../../entities/user.entity';
 
 export class UsersRepository {
   constructor(
@@ -34,6 +35,23 @@ export class UsersRepository {
       } else {
         throw new InternalServerErrorException('Error while saving user.');
       }
+    }
+  }
+
+  async update(
+    _id: MongooseSchema.Types.ObjectId,
+    updateUserDto: Partial<User>,
+  ) {
+    try {
+      const updatedUser = await this.usersModel.findByIdAndUpdate(
+        { _id: _id },
+        updateUserDto,
+        { new: true },
+      );
+
+      return updatedUser;
+    } catch (error) {
+      throw new InternalServerErrorException('Error while updating user.');
     }
   }
 

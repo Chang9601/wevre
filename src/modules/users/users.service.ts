@@ -1,7 +1,9 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { UsersRepository } from './users.repository';
 import * as bcrypt from 'bcryptjs';
 import { Schema as MongooseSchema } from 'mongoose';
+
+import { UsersRepository } from './users.repository';
+import { User } from '../../entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +19,13 @@ export class UsersService {
     } catch (error) {
       throw new InternalServerErrorException('Error while hashing password.');
     }
+  }
+
+  async update(
+    id: MongooseSchema.Types.ObjectId,
+    updateUserDto: Partial<User>,
+  ) {
+    return this.usersRepository.update(id, updateUserDto);
   }
 
   async findByEmail(email: string) {

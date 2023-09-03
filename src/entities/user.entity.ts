@@ -1,7 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Type } from 'class-transformer';
 import { Document, Schema as MongooseSchema } from 'mongoose';
+
 import { Room } from './room.entity';
+import Role from '../modules/auth/role/role.enum';
 
 @Schema()
 export class User extends Document {
@@ -20,11 +22,14 @@ export class User extends Document {
   @Prop({ required: true, default: false })
   bidAgreement: boolean;
 
-  @Prop({ type: Date, default: Date.now })
+  @Prop({ default: Date.now })
   updatedAt: Date;
 
-  @Prop({ type: Date, default: Date.now })
+  @Prop({ default: Date.now })
   createdAt: Date;
+
+  @Prop({ default: [Role.USER] })
+  roles: Role[];
 
   @Prop({
     required: false,

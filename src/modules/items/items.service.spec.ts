@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
+import { Schema as MongooseSchema } from 'mongoose';
+
 import { ItemsService } from './items.service';
 import { ItemsRepository } from './items.repository';
 import { Item } from '../../entities/item.entity';
-import { NotFoundException } from '@nestjs/common';
-import { Schema as MongooseSchema } from 'mongoose';
 
 const items: Partial<Item>[] = [
   {

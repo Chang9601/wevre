@@ -4,10 +4,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import TokenPayload from './interfaces/token-payload.interface';
 import { Schema as MongooseSchema } from 'mongoose';
+
+import { UsersService } from '../users/users.service';
+import TokenPayload from './interfaces/token-payload.interface';
 
 @Injectable()
 export class AuthService {

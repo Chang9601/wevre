@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+
 import { ItemsController } from './items.controller';
 import { ItemsService } from './items.service';
-import { MongooseModule } from '@nestjs/mongoose';
 import { Item, ItemSchema } from '../../entities/item.entity';
 import { ItemsRepository } from './items.repository';
 import { Category, CategorySchema } from '../../entities/category.entity';

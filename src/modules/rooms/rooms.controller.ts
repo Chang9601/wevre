@@ -1,6 +1,7 @@
 import { Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
-import { RoomsService } from './rooms.service';
 import { Schema as MongooseSchema } from 'mongoose';
+
+import { RoomsService } from './rooms.service';
 
 @Controller('rooms')
 export class RoomsController {

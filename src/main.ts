@@ -7,6 +7,8 @@ import * as cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors();
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // 들어오는 요청이 명시되지 않는 별도의 속성을 바디에 가지고 있는 경우 자동으로 제거
