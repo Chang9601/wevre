@@ -1,4 +1,5 @@
 import { IsMongoId, IsOptional, IsString } from 'class-validator';
+import { Schema as MongooseSchema } from 'mongoose';
 
 export class SendMessageDto {
   @IsString()
@@ -6,9 +7,9 @@ export class SendMessageDto {
 
   @IsOptional()
   @IsMongoId()
-  roomId?: string;
+  roomId?: MongooseSchema.Types.ObjectId;
 
   @IsOptional()
   @IsMongoId()
-  userId?: string;
+  userId?: MongooseSchema.Types.ObjectId;
 }

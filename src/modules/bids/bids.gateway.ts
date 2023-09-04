@@ -19,6 +19,7 @@ import { RoomsService } from '../rooms/rooms.service';
 import { User } from '../../entities/user.entity';
 import { SendMessageDto } from '../../dtos/send-message.dto';
 
+// Error handling!
 @WebSocketGateway()
 export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -47,43 +48,60 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const payload = await this.authService.verifyToken(token);
-      let user = payload && (await this.usersService.findById(payload.id));
+      const user = payload && (await this.usersService.findById(payload.id));
 
-      let room = await this.roomsSerivce.findByItemId(
+      const room = await this.roomsSerivce.findByItemId(
         itemId as MongooseSchema.Types.ObjectId,
       );
-
-      if (!room) {
-        const updateUserDto: Partial<User> = {
-          room,
-        };
-
-        user = await this.usersService.update(user._id, updateUserDto);
-        room = user.room;
-      }
 
       this.connections.set(client.id, user._id);
 
       if (room) {
-        return this.joinRoom(client, room._id);
+        return await this.joinRoom(client, room._id);
       }
     } catch (error) {
       client.disconnect(true);
-      throw new InternalServerErrorException(
-        'Error while connecting client to server.',
-      );
+
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException(
+          'Error while connecting client to server.',
+        );
+      }
     }
   }
 
   handleDisconnect(client: Socket) {
     this.connections.delete(client.id);
-    // client.disconnect(true);
+    client.disconnect(true);
   }
 
   @SubscribeMessage('message')
-  async sendMessage(client: Socket, message: string) {
-    const userId = this.connections.get(client.id);
-    const user = await this.usersService.findById(userId);
+  async sendMessage(client: Socket, sendMessageDto: SendMessageDto) {
+    try {
+      const userId = this.connections.get(client.id);
+      const user = await this.usersService.findById(userId);
+
+      if (!user.room) {
+        throw new NotFoundException('No room with this id found.');
+      }
+
+      sendMessageDto.userId = userId;
+      sendMessageDto.roomId = user.room._id;
+
+      await this.roomsSerivce.addMessage(sendMessageDto);
+
+      client.to(user.room._id).emit('message', sendMessageDto.text);
+    } catch (error) {
+      client.disconnect(true);
+
+      if (error instanceof NotFoundException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException('Error while sending message,');
+      }
+    }
   }
 
   @SubscribeMessage('join')
@@ -95,7 +113,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new NotFoundException('No room with this id found.');
       }
 
-      // Here or handleConnection?
+      // Here or handleConnection? I guess here
       const userId = this.connections.get(client.id);
       const updateUserDto: Partial<User> = {
         room: room,
@@ -105,6 +123,8 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.join(roomId.toString());
     } catch (error) {
+      client.disconnect(true);
+
       if (error instanceof NotFoundException) {
         throw error;
       } else {
@@ -125,6 +145,8 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.leave(roomId.toString());
     } catch (error) {
+      client.disconnect(true);
+
       throw new InternalServerErrorException('Error while leaving room.');
     }
   }

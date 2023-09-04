@@ -4,6 +4,7 @@ import { Schema as MongooseSchema } from 'mongoose';
 import { RoomsRepository } from './rooms.repository';
 import { objectIdValidator } from '../../utils/objectid-validator';
 import { ItemsRepository } from '../items/items.repository';
+import { SendMessageDto } from '../../dtos/send-message.dto';
 
 @Injectable()
 export class RoomsService {
@@ -31,5 +32,9 @@ export class RoomsService {
 
     const room = await this.roomsRepository.findByItemId(id);
     return room;
+  }
+
+  async addMessage(sendMessageDto: SendMessageDto) {
+    const { text, userId, roomId } = sendMessageDto;
   }
 }
