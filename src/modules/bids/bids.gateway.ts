@@ -50,6 +50,10 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const payload = await this.authService.verifyToken(token);
       const user = payload && (await this.usersService.findById(payload.id));
 
+      if (!user) {
+        throw new NotFoundException('No user with this token found.');
+      }
+
       const room = await this.roomsSerivce.findByItemId(
         itemId as MongooseSchema.Types.ObjectId,
       );
@@ -58,11 +62,15 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (room) {
         return await this.joinRoom(client, room._id);
+      } else {
+        throw new NotFoundException('No room with this item id found.');
       }
     } catch (error) {
       client.disconnect(true);
 
       if (error instanceof UnauthorizedException) {
+        throw error;
+      } else if (error instanceof NotFoundException) {
         throw error;
       } else {
         throw new InternalServerErrorException(
@@ -75,33 +83,6 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleDisconnect(client: Socket) {
     this.connections.delete(client.id);
     client.disconnect(true);
-  }
-
-  @SubscribeMessage('message')
-  async sendMessage(client: Socket, sendMessageDto: SendMessageDto) {
-    try {
-      const userId = this.connections.get(client.id);
-      const user = await this.usersService.findById(userId);
-
-      if (!user.room) {
-        throw new NotFoundException('No room with this id found.');
-      }
-
-      sendMessageDto.userId = userId;
-      sendMessageDto.roomId = user.room._id;
-
-      await this.roomsSerivce.addMessage(sendMessageDto);
-
-      client.to(user.room._id).emit('message', sendMessageDto.text);
-    } catch (error) {
-      client.disconnect(true);
-
-      if (error instanceof NotFoundException) {
-        throw error;
-      } else {
-        throw new InternalServerErrorException('Error while sending message,');
-      }
-    }
   }
 
   @SubscribeMessage('join')
@@ -148,6 +129,33 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.disconnect(true);
 
       throw new InternalServerErrorException('Error while leaving room.');
+    }
+  }
+
+  @SubscribeMessage('message')
+  async sendMessage(client: Socket, sendMessageDto: SendMessageDto) {
+    try {
+      const userId = this.connections.get(client.id);
+      const user = await this.usersService.findById(userId);
+
+      if (!user.room) {
+        throw new NotFoundException('No room with this id found.');
+      }
+
+      sendMessageDto.userId = userId;
+      sendMessageDto.roomId = user.room._id;
+
+      await this.roomsSerivce.addMessage(sendMessageDto);
+
+      client.to(user.room._id).emit('message', sendMessageDto.content);
+    } catch (error) {
+      client.disconnect(true);
+
+      if (error instanceof NotFoundException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException('Error while sending message,');
+      }
     }
   }
 

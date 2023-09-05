@@ -3,7 +3,7 @@ import { Schema as MongooseSchema } from 'mongoose';
 
 export class SendMessageDto {
   @IsString()
-  text: string;
+  content: string;
 
   @IsOptional()
   @IsMongoId()

@@ -3,11 +3,17 @@ import { AppModule } from './app.module';
 import { /*ClassSerializerInterceptor*/ ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors();
+  const corsOptions: CorsOptions = {
+    origin: '*', // Adjust this to match the origin(s) of your HTML page
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  };
+
+  app.enableCors(corsOptions);
 
   app.useGlobalPipes(
     new ValidationPipe({

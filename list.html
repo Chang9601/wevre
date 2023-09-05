@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wevre</title>
+    <style>
+      /* Add your CSS styles here */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      header {
+        background-color: #333;
+        color: white;
+        text-align: center;
+        padding: 10px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .item {
+        border: 1px solid #ccc;
+        margin: 10px;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Items</h1>
+    </header>
+    <div class="container">
+      <h2>작품 목록</h2>
+      <ul id="item-list">
+        <!-- Items will be added here dynamically -->
+      </ul>
+    </div>
+
+    <script>
+      // JavaScript code to fetch and display items
+
+      async function fetchItems() {
+        const response = await fetch(
+          'http://127.0.0.1:3000/items?search=조각&limit=10&sort=low',
+        ); // Update the URL to match your API endpoint
+        const data = await response.json();
+
+        console.log(data);
+
+        const itemList = document.getElementById('item-list');
+        itemList.innerHTML = '';
+
+        data.forEach((item) => {
+          const listItem = document.createElement('li');
+          listItem.textContent = item.itemName;
+          listItem.addEventListener('click', () => displayItemDetails(item));
+          itemList.appendChild(listItem);
+        });
+      }
+      fetchItems();
+    </script>
+  </body>
+</html>

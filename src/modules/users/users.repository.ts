@@ -44,7 +44,7 @@ export class UsersRepository {
   ) {
     try {
       const updatedUser = await this.usersModel.findByIdAndUpdate(
-        { _id: _id },
+        { _id },
         updateUserDto,
         { new: true },
       );

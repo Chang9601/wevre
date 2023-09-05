@@ -8,10 +8,13 @@ import { Schema as MongooseSchema } from 'mongoose';
 
 import { Room } from '../../entities/room.entity';
 import { Item } from '../../entities/item.entity';
+import { Message } from '../../entities/message.entity';
+import { User } from '../../entities/user.entity';
 
 export class RoomsRepository {
   constructor(
     @InjectModel(Room.name) private readonly roomsModel: Model<Room>,
+    @InjectModel(Message.name) private readonly messagesModel: Model<Message>,
   ) {}
 
   async create(item: Item, _id: MongooseSchema.Types.ObjectId) {
@@ -68,6 +71,23 @@ export class RoomsRepository {
     } catch (error) {
       throw new InternalServerErrorException(
         'Error while finding room by item id.',
+      );
+    }
+  }
+
+  async addMessage(content: string, user: User, room: Room) {
+    try {
+      let message = new this.messagesModel({
+        content,
+        user,
+        room,
+      });
+
+      message = await message.save();
+      return message._id;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error while adding message to room.',
       );
     }
   }
