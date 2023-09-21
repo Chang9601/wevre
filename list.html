@@ -23,48 +23,104 @@
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
+        text-align: center; /* Center-align the content within the container */
       }
 
-      .item {
+      .item-container {
         border: 1px solid #ccc;
         margin: 10px;
         padding: 10px;
+        text-align: center; /* Center-align the items */
+      }
+
+      .item {
+        /* Add any additional styles you want for the item here */
+      }
+
+      /* Remove bullet points from list items */
+      #item-list {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      /* Pagination controls */
+      .pagination {
+        margin-top: 20px;
       }
     </style>
   </head>
   <body>
     <header>
-      <h1>Items</h1>
+      <h1>작품 목록</h1>
     </header>
     <div class="container">
-      <h2>작품 목록</h2>
       <ul id="item-list">
         <!-- Items will be added here dynamically -->
       </ul>
+      <!-- Pagination controls -->
+      <div class="pagination">
+        <button id="prevPage" disabled>이전</button>
+        <button id="nextPage">다음</button>
+      </div>
+      <!-- Display total number of items -->
+      <p id="totalItems"></p>
     </div>
 
     <script>
-      // JavaScript code to fetch and display items
+      // JavaScript code to fetch and display items with pagination
 
-      async function fetchItems() {
-        const response = await fetch(
-          'http://127.0.0.1:3000/items?search=조각&limit=10&sort=low',
-        ); // Update the URL to match your API endpoint
-        const data = await response.json();
+      let currentPage = 1; // Initialize current page
 
-        console.log(data);
+      async function fetchItems(page) {
+        const res = await fetch(
+          `http://127.0.0.1:3000/items?sort=high&skip=${page}`,
+        ); // Include pagination parameters
+        const data = await res.json();
 
         const itemList = document.getElementById('item-list');
         itemList.innerHTML = '';
 
-        data.forEach((item) => {
+        data.items.forEach((item) => {
+          const itemContainer = document.createElement('div'); // Create a container for each item
+          itemContainer.classList.add('item-container'); // Apply the container CSS class
+
           const listItem = document.createElement('li');
           listItem.textContent = item.itemName;
           listItem.addEventListener('click', () => displayItemDetails(item));
-          itemList.appendChild(listItem);
+
+          itemContainer.appendChild(listItem);
+          itemList.appendChild(itemContainer);
         });
+
+        // Update pagination controls
+        const prevPageButton = document.getElementById('prevPage');
+        const nextPageButton = document.getElementById('nextPage');
+        const totalItemsElement = document.getElementById('totalItems'); // Add this line
+
+        prevPageButton.disabled = data.page === 1;
+        nextPageButton.disabled = data.page === data.pages;
+
+        // Update current page
+        currentPage = data.page;
+
+        // Display the total number of items (add this section)
+        totalItemsElement.textContent = `Total Items: ${data.count}`;
       }
-      fetchItems();
+
+      // Add event listeners to pagination buttons
+      document
+        .getElementById('prevPage')
+        .addEventListener('click', () => fetchItems(currentPage - 1));
+      document
+        .getElementById('nextPage')
+        .addEventListener('click', () => fetchItems(currentPage + 1));
+
+      fetchItems(currentPage); // Fetch items for the initial page
+
+      // Dummy function to display item details (you can implement this separately)
+      function displayItemDetails(item) {
+        alert(`작품명: ${item.itemName}\n설명: ${item.description}`);
+      }
     </script>
   </body>
 </html>

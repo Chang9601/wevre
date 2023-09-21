@@ -1,11 +1,18 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { PAGINATION } from '../utils/pagination.enum';
+import { Type } from 'class-transformer';
 
 export class PaginationDto {
   @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
   limit?: number = PAGINATION.LIMIT;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
   skip?: number = PAGINATION.SKIP;
 
   @IsOptional()

@@ -16,23 +16,18 @@ export class ItemsRepository {
     private readonly categoriesModel: Model<Category>,
   ) {}
 
-  async find(
-    limit: number,
-    skip: number,
-    search: string,
-    sort: string,
-  ): Promise<Item[]> {
+  async find(limit: number, skip: number, search: string, sort: string) {
     try {
       const queryBuilder = new QueryBuilder(search, sort);
 
-      const sortBuilder = queryBuilder.buildSortQuery();
+      const sortQuery = queryBuilder.buildSortQuery();
 
       const options = ['itemName', 'artistName'];
 
       const category = await this.categoriesModel.findOne({ name: search });
 
       if (category) {
-        return await this.itemsModel
+        const items = await this.itemsModel
           .find({
             category,
           })
@@ -41,25 +36,39 @@ export class ItemsRepository {
           .populate('materials')
           .skip(skip)
           .limit(limit)
-          .sort(sortBuilder);
+          .sort(sortQuery);
+
+        const count = await this.itemsModel.countDocuments({ category });
+        const page = Math.ceil(skip / limit) + 1;
+        const pages = Math.ceil(count / limit);
+
+        return { items, page, pages, count };
       }
 
       const searchPromises = options.map((option) => {
-        const searchBuilder = queryBuilder.buildSearchQuery(option);
+        let searchQuery = queryBuilder.buildSearchQuery(option);
+
+        if (!search) {
+          searchQuery = {};
+        }
+
         return this.itemsModel
-          .find(searchBuilder)
+          .find(searchQuery)
           .select('-createdAt -updatedAt')
           .populate('category')
           .populate('materials')
           .skip(skip)
           .limit(limit)
-          .sort(sortBuilder);
+          .sort(sortQuery);
       });
 
       const searchResults = await Promise.all(searchPromises);
       const items = searchResults.find((result) => result.length > 0) || [];
+      const count = items.length;
+      const page = Math.ceil(skip / limit) + 1;
+      const pages = Math.ceil(count / limit);
 
-      return items;
+      return { items, page, pages, count };
     } catch (error) {
       throw new InternalServerErrorException(
         'Error while finding a list of items.',
