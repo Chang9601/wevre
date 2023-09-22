@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wevre</title>
     <style>
-      /* Add your CSS styles here */
       body {
         font-family: Arial, sans-serif;
         margin: 0;
@@ -23,27 +22,24 @@
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
-        text-align: center; /* Center-align the content within the container */
+        text-align: center;
       }
 
       .item-container {
         border: 1px solid #ccc;
         margin: 10px;
         padding: 10px;
-        text-align: center; /* Center-align the items */
+        text-align: center;
       }
 
       .item {
-        /* Add any additional styles you want for the item here */
       }
 
-      /* Remove bullet points from list items */
       #item-list {
         list-style-type: none;
         padding: 0;
       }
 
-      /* Pagination controls */
       .pagination {
         margin-top: 20px;
       }
@@ -54,70 +50,90 @@
       <h1>작품 목록</h1>
     </header>
     <div class="container">
-      <ul id="item-list">
-        <!-- Items will be added here dynamically -->
-      </ul>
-      <!-- Pagination controls -->
+      <label for="itemsPerPageInput">페이지 당 상품 개수: </label>
+      <input type="number" id="itemsPerPageInput" value="10" />
+      <button id="updateItemsPerPage">수정</button>
+
+      <ul id="item-list"></ul>
       <div class="pagination">
         <button id="prevPage" disabled>이전</button>
         <button id="nextPage">다음</button>
       </div>
-      <!-- Display total number of items -->
       <p id="totalItems"></p>
     </div>
 
     <script>
-      // JavaScript code to fetch and display items with pagination
+      let currentPage = 1;
+      let itemsPerPage = 10;
 
-      let currentPage = 1; // Initialize current page
+      async function fetchItems(page, limit) {
+        console.log(`Fetching page ${page} with ${limit} items per page`);
 
-      async function fetchItems(page) {
         const res = await fetch(
-          `http://127.0.0.1:3000/items?sort=high&skip=${page}`,
-        ); // Include pagination parameters
+          `http://127.0.0.1:3000/items?sort=high&skip=${page}&limit=${limit}`,
+        );
         const data = await res.json();
+
+        console.log(data);
 
         const itemList = document.getElementById('item-list');
         itemList.innerHTML = '';
 
         data.items.forEach((item) => {
-          const itemContainer = document.createElement('div'); // Create a container for each item
-          itemContainer.classList.add('item-container'); // Apply the container CSS class
+          const itemContainer = document.createElement('div');
+          itemContainer.classList.add('item-container');
 
           const listItem = document.createElement('li');
           listItem.textContent = item.itemName;
-          listItem.addEventListener('click', () => displayItemDetails(item));
+          listItem.addEventListener('click', () => {
+            const detailURL = `detail.html?itemName=${encodeURIComponent(
+              item.itemName,
+            )}`;
+            window.location.href = detailURL;
+          });
 
           itemContainer.appendChild(listItem);
           itemList.appendChild(itemContainer);
         });
 
-        // Update pagination controls
         const prevPageButton = document.getElementById('prevPage');
         const nextPageButton = document.getElementById('nextPage');
-        const totalItemsElement = document.getElementById('totalItems'); // Add this line
+        const totalItemsElement = document.getElementById('totalItems');
 
         prevPageButton.disabled = data.page === 1;
         nextPageButton.disabled = data.page === data.pages;
 
-        // Update current page
         currentPage = data.page;
 
-        // Display the total number of items (add this section)
-        totalItemsElement.textContent = `Total Items: ${data.count}`;
+        totalItemsElement.textContent = `상품 개수: ${data.count}`;
       }
 
-      // Add event listeners to pagination buttons
+      document
+        .getElementById('updateItemsPerPage')
+        .addEventListener('click', () => {
+          const newItemsPerPage = parseInt(
+            document.getElementById('itemsPerPageInput').value,
+            10,
+          );
+          if (!isNaN(newItemsPerPage)) {
+            itemsPerPage = newItemsPerPage;
+            fetchItems(currentPage, itemsPerPage);
+          }
+        });
+
       document
         .getElementById('prevPage')
-        .addEventListener('click', () => fetchItems(currentPage - 1));
+        .addEventListener('click', () =>
+          fetchItems(currentPage - 1, itemsPerPage),
+        );
       document
         .getElementById('nextPage')
-        .addEventListener('click', () => fetchItems(currentPage + 1));
+        .addEventListener('click', () =>
+          fetchItems(currentPage + 1, itemsPerPage),
+        );
 
-      fetchItems(currentPage); // Fetch items for the initial page
+      fetchItems(currentPage, itemsPerPage);
 
-      // Dummy function to display item details (you can implement this separately)
       function displayItemDetails(item) {
         alert(`작품명: ${item.itemName}\n설명: ${item.description}`);
       }

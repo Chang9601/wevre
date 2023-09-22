@@ -38,7 +38,7 @@ export class ItemsRepository {
           .limit(limit)
           .sort(sortQuery);
 
-        const count = await this.itemsModel.countDocuments({ category });
+        const count = items.length;
         const page = Math.ceil(skip / limit) + 1;
         const pages = Math.ceil(count / limit);
 

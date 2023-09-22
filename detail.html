@@ -3,86 +3,94 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Items</title>
-    <style>
-      /* Add your CSS styles here */
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-      }
-
-      header {
-        background-color: #333;
-        color: white;
-        text-align: center;
-        padding: 10px;
-      }
-
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-
-      .item {
-        border: 1px solid #ccc;
-        margin: 10px;
-        padding: 10px;
-      }
-    </style>
+    <title>Wevre</title>
+    <script
+      src="https://cdn.socket.io/4.6.0/socket.io.min.js"
+      integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
-    <header>
-      <h1>Items</h1>
-    </header>
-    <div class="container">
-      <h2>작품 목록</h2>
-      <ul id="item-list">
-        <!-- Items will be added here dynamically -->
-      </ul>
-
-      <h2>Item Details</h2>
-      <div id="item-details">
-        <!-- Item details will be displayed here dynamically -->
-      </div>
-    </div>
+    <h1></h1>
+    <pre id="messages" style="height: 400px; overflow: scroll"></pre>
+    <input
+      type="text"
+      id="messageBox"
+      placeholder="입찰 가격을 입력하세요."
+      style="display: block; width: 100%; margin-bottom: 10px; padding: 10px"
+    />
+    <button id="send" title="Send Message!" style="width: 100%; height: 30px">
+      입찰
+    </button>
 
     <script>
-      // JavaScript code to fetch and display items
-
-      async function fetchItems() {
-        const response = await fetch(
-          'http://127.0.0.1:3000/items?search=조각&limit=10&sort=low',
-        ); // Update the URL to match your API endpoint
-        const data = await response.json();
-
-        console.log(data);
-
-        const itemList = document.getElementById('item-list');
-        itemList.innerHTML = '';
-
-        data.forEach((item) => {
-          const listItem = document.createElement('li');
-          listItem.textContent = item.itemName;
-          listItem.addEventListener('click', () => displayItemDetails(item));
-          itemList.appendChild(listItem);
+      // Parse the query parameters from the URL
+      function getQueryParams() {
+        const queryParams = {};
+        const queryString = window.location.search.slice(1);
+        const paramPairs = queryString.split('&');
+        paramPairs.forEach((pair) => {
+          const [key, value] = pair.split('=');
+          queryParams[key] = decodeURIComponent(value);
         });
+        return queryParams;
       }
 
-      async function displayItemDetails(item) {
-        const itemDetails = document.getElementById('item-details');
-        itemDetails.innerHTML = `
-                <div class="item">
-                    <h3>${item.itemName}</h3>
-                    <p>Artist: ${item.artistName}</p>
-                    <p>Completion Date: ${item.completionDate}</p>
-                    <!-- Add more item details here -->
-                </div>
-            `;
+      // Get the item name from the query parameters
+      const queryParams = getQueryParams();
+      const itemName = queryParams.itemName;
+
+      // Use the item name as needed
+      if (itemName) {
+        // You can display the item name or use it for further actions
+        document.querySelector('h1').textContent = `${itemName} 실시간 경매방`;
       }
 
-      fetchItems();
+      (function () {
+        const sendBtn = document.querySelector('#send');
+        const messages = document.querySelector('#messages');
+        const messageBox = document.querySelector('#messageBox');
+
+        // Connect to the WebSocket server using Socket.IO
+        const socket = io('http://127.0.0.1:3000', {
+          withCredentials: true,
+          auth: {
+            token:
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZTk2YzVmM2UwNWYyMDBkMTg1Y2IwYyIsImlhdCI6MTY5NTM5MTQzMSwiZXhwIjoxNjk1NDc3ODMxfQ.qYsAeILCSV6E47idKdcdfuxg2fdtPHPCfmUEXT9OZb8',
+          },
+        }); // Update this URL
+
+        socket.on('connect', () => {
+          console.log('Connected to WebSocket server!');
+
+          // Upon connecting, send a 'join' event to the server
+          socket.emit('join', { itemName: itemName });
+        });
+
+        socket.on('message', (data) => {
+          showMessage(data);
+        });
+
+        socket.on('disconnect', () => {
+          console.log('Disconnected from WebSocket server!');
+        });
+
+        function showMessage(message) {
+          messages.textContent += `\n\n${message}`;
+          messages.scrollTop = messages.scrollHeight;
+          messageBox.value = '';
+        }
+
+        sendBtn.onclick = function () {
+          if (socket.connected) {
+            // Send a message to the server with the 'message' event
+            socket.emit('message', messageBox.value);
+            showMessage(messageBox.value);
+          } else {
+            showMessage('No WebSocket connection :(');
+          }
+        };
+      })();
     </script>
   </body>
 </html>

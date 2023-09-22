@@ -20,7 +20,13 @@ import { User } from '../../entities/user.entity';
 import { SendMessageDto } from '../../dtos/send-message.dto';
 
 // Error handling!
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin:
+      process.env.NODE_ENV === 'production' ? false : ['http://127.0.0.1:5500'],
+    credentials: true,
+  },
+})
 export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -47,12 +53,16 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
       }
 
+      console.log(`token: ${token}`);
+
       const payload = await this.authService.verifyToken(token);
       const user = payload && (await this.usersService.findById(payload.id));
 
       if (!user) {
         throw new NotFoundException('No user with this token found.');
       }
+
+      console.log(`user: ${user}`);
 
       const room = await this.roomsSerivce.findByItemId(
         itemId as MongooseSchema.Types.ObjectId,
@@ -74,7 +84,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw error;
       } else {
         throw new InternalServerErrorException(
-          'Error while connecting client to server.',
+          'Error connecting client to server.',
         );
       }
     }
@@ -109,7 +119,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (error instanceof NotFoundException) {
         throw error;
       } else {
-        throw new InternalServerErrorException('Error while joining room.');
+        throw new InternalServerErrorException('Error joining room.');
       }
     }
   }
@@ -128,7 +138,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error) {
       client.disconnect(true);
 
-      throw new InternalServerErrorException('Error while leaving room.');
+      throw new InternalServerErrorException('Error leaving room.');
     }
   }
 
@@ -154,7 +164,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (error instanceof NotFoundException) {
         throw error;
       } else {
-        throw new InternalServerErrorException('Error while sending message,');
+        throw new InternalServerErrorException('Error sending message,');
       }
     }
   }
