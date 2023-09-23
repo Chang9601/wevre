@@ -4,6 +4,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Schema as MongooseSchema } from 'mongoose';
@@ -11,6 +12,7 @@ import { Schema as MongooseSchema } from 'mongoose';
 import { AuthService } from '../auth/auth.service';
 import { UsersService } from '../users/users.service';
 import {
+  BadRequestException,
   InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
@@ -19,11 +21,10 @@ import { RoomsService } from '../rooms/rooms.service';
 import { User } from '../../entities/user.entity';
 import { SendMessageDto } from '../../dtos/send-message.dto';
 
-// Error handling!
 @WebSocketGateway({
   cors: {
     origin:
-      process.env.NODE_ENV === 'production' ? false : ['http://127.0.0.1:5500'],
+      process.env.NODE_ENV === 'production' ? false : ['http://127.0.0.1:3000'],
     credentials: true,
   },
 })
@@ -41,11 +42,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth.token.toString();
-      // clean code!
-      let itemId: unknown;
-      itemId = 'dummy';
-      itemId = this.extractItemIDFromURL(client.handshake.url);
+      const token = client.handshake.auth.token;
 
       if (!token) {
         throw new UnauthorizedException(
@@ -53,16 +50,19 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
       }
 
-      console.log(`token: ${token}`);
+      let itemId: unknown = null;
+      itemId = client.handshake.query.id;
+
+      if (!itemId) {
+        throw new NotFoundException('No item with this id found.');
+      }
 
       const payload = await this.authService.verifyToken(token);
       const user = payload && (await this.usersService.findById(payload.id));
 
       if (!user) {
-        throw new NotFoundException('No user with this token found.');
+        throw new WsException('No user with this token found.');
       }
-
-      console.log(`user: ${user}`);
 
       const room = await this.roomsSerivce.findByItemId(
         itemId as MongooseSchema.Types.ObjectId,
@@ -71,14 +71,15 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.connections.set(client.id, user._id);
 
       if (room) {
-        return await this.joinRoom(client, room._id);
+        await this.joinRoom(client, user, room._id);
       } else {
-        throw new NotFoundException('No room with this item id found.');
+        throw new WsException('No room with this item id found.');
       }
     } catch (error) {
+      this.connections.delete(client.id);
       client.disconnect(true);
 
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof WsException) {
         throw error;
       } else if (error instanceof NotFoundException) {
         throw error;
@@ -91,12 +92,17 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
+    console.log('disconnet');
     this.connections.delete(client.id);
     client.disconnect(true);
   }
 
   @SubscribeMessage('join')
-  async joinRoom(client: Socket, roomId: MongooseSchema.Types.ObjectId) {
+  async joinRoom(
+    client: Socket,
+    user: User,
+    roomId: MongooseSchema.Types.ObjectId,
+  ) {
     try {
       const room = await this.roomsSerivce.findById(roomId);
 
@@ -104,7 +110,6 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new NotFoundException('No room with this id found.');
       }
 
-      // Here or handleConnection? I guess here
       const userId = this.connections.get(client.id);
       const updateUserDto: Partial<User> = {
         room: room,
@@ -112,11 +117,18 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       await this.usersService.update(userId, updateUserDto);
 
-      client.join(roomId.toString());
+      await client.join(roomId.toString());
+      this.server.emit(
+        'join',
+        `${user.name}(${user.email})님이 참가하셨습니다.`,
+      );
     } catch (error) {
+      this.connections.delete(client.id);
       client.disconnect(true);
 
       if (error instanceof NotFoundException) {
+        throw error;
+      } else if (error instanceof BadRequestException) {
         throw error;
       } else {
         throw new InternalServerErrorException('Error joining room.');
@@ -136,6 +148,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.leave(roomId.toString());
     } catch (error) {
+      this.connections.delete(client.id);
       client.disconnect(true);
 
       throw new InternalServerErrorException('Error leaving room.');
@@ -147,6 +160,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const userId = this.connections.get(client.id);
       const user = await this.usersService.findById(userId);
+      console.log(sendMessageDto);
 
       if (!user.room) {
         throw new NotFoundException('No room with this id found.');
@@ -157,21 +171,19 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       await this.roomsSerivce.addMessage(sendMessageDto);
 
-      client.to(user.room._id).emit('message', sendMessageDto.content);
+      // Except the sender
+      // with ACK
+      client.broadcast.timeout(5000).emit('message', sendMessageDto.content);
     } catch (error) {
+      this.connections.delete(client.id);
       client.disconnect(true);
 
       if (error instanceof NotFoundException) {
         throw error;
       } else {
+        console.log(error);
         throw new InternalServerErrorException('Error sending message,');
       }
     }
-  }
-
-  private extractItemIDFromURL(url: string): string {
-    const urlParts = url.split('/');
-    const itemID = urlParts[urlParts.length - 1];
-    return itemID;
   }
 }

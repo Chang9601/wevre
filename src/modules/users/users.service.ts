@@ -17,7 +17,7 @@ export class UsersService {
 
       return this.usersRepository.create(name, email, hashedPassword);
     } catch (error) {
-      throw new InternalServerErrorException('Error while hashing password.');
+      throw new InternalServerErrorException('Error hashing password.');
     }
   }
 

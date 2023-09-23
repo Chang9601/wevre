@@ -33,7 +33,7 @@ export class UsersRepository {
       if (error instanceof ConflictException) {
         throw error;
       } else {
-        throw new InternalServerErrorException('Error while saving user.');
+        throw new InternalServerErrorException('Error saving user.');
       }
     }
   }
@@ -51,7 +51,7 @@ export class UsersRepository {
 
       return updatedUser;
     } catch (error) {
-      throw new InternalServerErrorException('Error while updating user.');
+      throw new InternalServerErrorException('Error updating user.');
     }
   }
 
@@ -59,16 +59,14 @@ export class UsersRepository {
     try {
       return await this.usersModel.findOne({ email });
     } catch (error) {
-      throw new InternalServerErrorException(
-        'Error while finding user by email.',
-      );
+      throw new InternalServerErrorException('Error finding user by email.');
     }
   }
   async findById(_id: MongooseSchema.Types.ObjectId): Promise<User> {
     try {
       return await this.usersModel.findOne({ _id });
     } catch (error) {
-      throw new InternalServerErrorException('Error while finding user by id.');
+      throw new InternalServerErrorException('Error finding user by id.');
     }
   }
 }

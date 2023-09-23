@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Schema as MongooseSchema } from 'mongoose';
 
 import { RoomsRepository } from './rooms.repository';
 import { objectIdValidator } from '../../utils/objectid-validator';
-import { ItemsRepository } from '../items/items.repository';
 import { SendMessageDto } from '../../dtos/send-message.dto';
 import { UsersRepository } from '../users/users.repository';
 
@@ -11,15 +11,14 @@ import { UsersRepository } from '../users/users.repository';
 export class RoomsService {
   constructor(
     private readonly roomsRepository: RoomsRepository,
-    private readonly itemsRepository: ItemsRepository,
     private readonly usersRepository: UsersRepository,
   ) {}
 
-  async create(id: MongooseSchema.Types.ObjectId) {
-    objectIdValidator(id);
-
-    const item = await this.itemsRepository.findOne(id, true);
-    return this.roomsRepository.create(item, id);
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+    timeZone: 'Asia/Seoul',
+  })
+  async create() {
+    this.roomsRepository.create();
   }
 
   async findById(id: MongooseSchema.Types.ObjectId) {

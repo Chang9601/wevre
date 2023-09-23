@@ -1,16 +1,19 @@
 import { NestFactory /*Reflector*/ } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { /*ClassSerializerInterceptor*/ ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as cookieParser from 'cookie-parser';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import * as cookieParser from 'cookie-parser';
+
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const corsOptions: CorsOptions = {
-    origin: '*', // Adjust this to match the origin(s) of your HTML page
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin:
+      process.env.NODE_ENV === 'production' ? false : ['http://127.0.0.1:3000'],
+    credentials: true,
+    methods: ['GET', 'POST'],
   };
 
   app.enableCors(corsOptions);

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wevre</title>
+    <title>List</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -30,9 +30,6 @@
         margin: 10px;
         padding: 10px;
         text-align: center;
-      }
-
-      .item {
       }
 
       #item-list {
@@ -67,14 +64,10 @@
       let itemsPerPage = 10;
 
       async function fetchItems(page, limit) {
-        console.log(`Fetching page ${page} with ${limit} items per page`);
-
         const res = await fetch(
           `http://127.0.0.1:3000/items?sort=high&skip=${page}&limit=${limit}`,
         );
         const data = await res.json();
-
-        console.log(data);
 
         const itemList = document.getElementById('item-list');
         itemList.innerHTML = '';
@@ -86,9 +79,27 @@
           const listItem = document.createElement('li');
           listItem.textContent = item.itemName;
           listItem.addEventListener('click', () => {
+            const startDate = new Date(item.startDate);
+            const endDate = new Date(item.endDate);
+
+            const startDateString = `${startDate.getFullYear()}-${String(
+              startDate.getMonth() + 1,
+            ).padStart(2, '0')}-${String(startDate.getDate()).padStart(
+              2,
+              '0',
+            )}`;
+            const endDateString = `${endDate.getFullYear()}-${String(
+              endDate.getMonth() + 1,
+            ).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+
             const detailURL = `detail.html?itemName=${encodeURIComponent(
               item.itemName,
-            )}`;
+            )}&itemId=${encodeURIComponent(
+              item._id,
+            )}&startDate=${encodeURIComponent(
+              startDateString,
+            )}&endDate=${encodeURIComponent(endDateString)}`;
+
             window.location.href = detailURL;
           });
 

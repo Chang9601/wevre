@@ -48,9 +48,7 @@ export class AuthService {
 
       return payload;
     } catch (error) {
-      throw new InternalServerErrorException(
-        'Error while verifying JWT token.',
-      );
+      throw new InternalServerErrorException('Error verifying JWT token.');
     }
   }
 }

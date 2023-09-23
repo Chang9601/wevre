@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detail</title>
+    <script
+      src="https://cdn.socket.io/4.6.0/socket.io.min.js"
+      integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <h1></h1>
+    <pre id="messages" style="height: 400px; overflow: scroll"></pre>
+    <input
+      type="text"
+      id="messageBox"
+      placeholder="입찰 가격을 입력하세요."
+      style="display: block; width: 100%; margin-bottom: 10px; padding: 10px"
+    />
+    <button id="send" title="Send Message!" style="width: 100%; height: 30px">
+      입찰
+    </button>
+
+    <script>
+      function getQueryParams() {
+        const queryParams = {};
+        const queryString = window.location.search.slice(1);
+        const paramPairs = queryString.split('&');
+        paramPairs.forEach((pair) => {
+          const [key, value] = pair.split('=');
+          queryParams[key] = decodeURIComponent(value);
+        });
+        return queryParams;
+      }
+
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
+
+      const queryParams = getQueryParams();
+      const itemId = queryParams.itemId;
+      const itemName = queryParams.itemName;
+      const startDate = queryParams.startDate;
+      const endDate = queryParams.endDate;
+
+      if (itemName) {
+        const h1Element = document.querySelector('h1');
+        h1Element.innerHTML = `${itemName} 실시간 경매방<br>시작: ${startDate}<br>종료: ${endDate}`;
+      }
+    </script>
+
+    <script>
+      const sendButton = document.querySelector('#send');
+      const messages = document.querySelector('#messages');
+      const messageBox = document.querySelector('#messageBox');
+
+      const socket = io(`http://127.0.0.1:3000`, {
+        withCredentials: true,
+        auth: {
+          token: getCookie('token'),
+        },
+        query: {
+          id: itemId,
+        },
+      });
+
+      socket.on('connect', () => {
+        console.log('Connected to WebSocket server!');
+
+        socket.on('join', (data) => {
+          showMessage(data);
+        });
+
+        socket.on('message', (data) => {
+          showMessage(data);
+        });
+      });
+
+      socket.on('disconnect', () => {
+        console.log('Disconnected from WebSocket server!');
+      });
+
+      function showMessage(message) {
+        messages.textContent += `\n\n${message}`;
+        messages.scrollTop = messages.scrollHeight;
+        messageBox.value = '';
+      }
+
+      sendButton.onclick = function () {
+        if (socket.connected) {
+          socket.emit('message', { content: messageBox.value });
+          showMessage(`나: ${messageBox.value}`);
+        } else {
+          showMessage('No WebSocket connection :(');
+        }
+      };
+    </script>
+  </body>
+</html>

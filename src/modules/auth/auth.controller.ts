@@ -48,8 +48,9 @@ export class AuthController {
     const expiration = 1 * 24 * 60 * 60 * 1000;
 
     res
-      .cookie(`token_${user._id}`, token, {
-        httpOnly: true,
+      .cookie(`token`, token, {
+        domain: '127.0.0.1',
+        httpOnly: false,
         secure: false,
         sameSite: 'lax',
         expires: new Date(Date.now() + expiration),

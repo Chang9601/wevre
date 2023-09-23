@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In</title>
+  </head>
+  <body>
+    <h1>로그인</h1>
+    <form id="signin-form">
+      <label for="signin-email">이메일:</label>
+      <input type="email" id="signin-email" name="email" required /><br /><br />
+
+      <label for="signin-password">비밀번호:</label>
+      <input
+        type="password"
+        id="signin-password"
+        name="password"
+        required
+      /><br /><br />
+
+      <input type="submit" value="로그인" />
+    </form>
+
+    <!-- Placeholder for the error message -->
+    <p id="error-message"></p>
+
+    <script>
+      document
+        .getElementById('signin-form')
+        .addEventListener('submit', function (event) {
+          event.preventDefault();
+          const email = document.getElementById('signin-email').value;
+          const password = document.getElementById('signin-password').value;
+
+          // Clear any existing error message
+          const errorMessage = document.getElementById('error-message');
+          errorMessage.textContent = '';
+
+          fetch('/auth/signin', {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          }).then((res) => {
+            if (res.status === 200) {
+              window.location.href = 'index.html';
+            } else if (res.status === 401) {
+              errorMessage.textContent = '잘못된 이메일 혹은 잘못된 비밀번호.';
+            } else {
+              errorMessage.textContent = '오류 발생.';
+            }
+          });
+        });
+    </script>
+  </body>
+</html>

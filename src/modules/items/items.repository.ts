@@ -70,9 +70,7 @@ export class ItemsRepository {
 
       return { items, page, pages, count };
     } catch (error) {
-      throw new InternalServerErrorException(
-        'Error while finding a list of items.',
-      );
+      throw new InternalServerErrorException('Error finding a list of items.');
     }
   }
 
@@ -104,9 +102,7 @@ export class ItemsRepository {
       if (error instanceof NotFoundException) {
         throw error;
       } else {
-        throw new InternalServerErrorException(
-          'Error while finding an itme by id.',
-        );
+        throw new InternalServerErrorException('Error finding an itme by id.');
       }
     }
   }

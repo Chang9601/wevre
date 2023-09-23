@@ -1,10 +1,8 @@
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import {
-  ConflictException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
+import { InternalServerErrorException } from '@nestjs/common';
 import { Schema as MongooseSchema } from 'mongoose';
+import * as moment from 'moment';
 
 import { Room } from '../../entities/room.entity';
 import { Item } from '../../entities/item.entity';
@@ -15,45 +13,64 @@ export class RoomsRepository {
   constructor(
     @InjectModel(Room.name) private readonly roomsModel: Model<Room>,
     @InjectModel(Message.name) private readonly messagesModel: Model<Message>,
+    @InjectModel(Item.name) private readonly itemsModel: Model<Item>,
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
-  async create(item: Item, _id: MongooseSchema.Types.ObjectId) {
+  async create() {
+    const session = await this.connection.startSession();
+    session.startTransaction();
+
     try {
-      const { itemName, startDate, endDate } = item;
+      const items = await this.itemsModel.find();
 
-      const duplicateItem = await this.findByItemId(_id);
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
 
-      if (duplicateItem) {
-        throw new ConflictException('Room with this item already exists.');
+        const startDate = item.startDate;
+        const endDate = item.endDate;
+
+        const {
+          year: startYear,
+          month: startMonth,
+          day: startDay,
+        } = this.formatDateToForm(startDate);
+
+        const {
+          year: endYear,
+          month: endMonth,
+          day: endDay,
+        } = this.formatDateToForm(endDate);
+
+        const today = moment(new Date());
+
+        if (today.isBetween(startDate, endDate)) {
+          let room = await this.findByItemId(item._id);
+
+          if (!room) {
+            item.auctionStatus = true;
+
+            room = new this.roomsModel({
+              name: `${item.itemName} 경매방`,
+              description: `본 경매방은 ${startYear}년 ${startMonth}월 ${startDay}일에 시작하여 ${endYear}년 ${endMonth}월 ${endDay}일에 종료됩니다.`,
+              startDate: startDate,
+              endDate: endDate,
+              item: item,
+            });
+
+            await item.save();
+            await room.save();
+          }
+        }
       }
 
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-
-      const startYear = start.getFullYear();
-      const startMonth = start.getMonth() + 1; // 월은 0부터 시작
-      const startDay = start.getDate();
-
-      const endYear = end.getFullYear();
-      const endMonth = end.getMonth() + 1;
-      const endDay = end.getDate();
-
-      let room = new this.roomsModel({
-        name: `${itemName} 경매방`,
-        description: `본 경매방은 ${startYear}년 ${startMonth}월 ${startDay}일에 시작하여 ${endYear}년 ${endMonth}월 ${endDay}일에 종료됩니다.`,
-        startDate: startDate,
-        endDate: endDate,
-        item: item,
-      });
-
-      room = await room.save();
-      return room._id;
+      await session.commitTransaction();
     } catch (error) {
-      if (error instanceof ConflictException) {
-        throw error;
-      } else {
-        throw new InternalServerErrorException('Error while saving room.');
-      }
+      await session.abortTransaction();
+
+      throw new InternalServerErrorException('Error saving room.');
+    } finally {
+      session.endSession();
     }
   }
 
@@ -61,7 +78,7 @@ export class RoomsRepository {
     try {
       return this.roomsModel.findOne({ _id });
     } catch (error) {
-      throw new InternalServerErrorException('Error while finding room by id.');
+      throw new InternalServerErrorException('Error finding room by id.');
     }
   }
 
@@ -69,9 +86,7 @@ export class RoomsRepository {
     try {
       return this.roomsModel.findOne({ 'item._id': _id });
     } catch (error) {
-      throw new InternalServerErrorException(
-        'Error while finding room by item id.',
-      );
+      throw new InternalServerErrorException('Error finding room by item id.');
     }
   }
 
@@ -86,9 +101,15 @@ export class RoomsRepository {
       message = await message.save();
       return message._id;
     } catch (error) {
-      throw new InternalServerErrorException(
-        'Error while adding message to room.',
-      );
+      throw new InternalServerErrorException('Error adding message to room.');
     }
+  }
+
+  private formatDateToForm(date: Date) {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // Months are zero-based
+    const day = date.getDate();
+
+    return { year, month, day };
   }
 }
