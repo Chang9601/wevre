@@ -15,7 +15,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
+  // UnauthorizedException,
 } from '@nestjs/common';
 import { RoomsService } from '../rooms/rooms.service';
 import { User } from '../../entities/user.entity';
@@ -41,22 +41,20 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   async handleConnection(client: Socket) {
+    const token = client.handshake.auth.token;
+
+    if (!token) {
+      throw new WsException('You must provide a valid token to connect.');
+    }
+
+    let itemId: unknown = null;
+    itemId = client.handshake.query.id;
+
+    if (!itemId) {
+      throw new WsException('No item with this id found.');
+    }
+
     try {
-      const token = client.handshake.auth.token;
-
-      if (!token) {
-        throw new UnauthorizedException(
-          'You must provide a valid token to connect.',
-        );
-      }
-
-      let itemId: unknown = null;
-      itemId = client.handshake.query.id;
-
-      if (!itemId) {
-        throw new NotFoundException('No item with this id found.');
-      }
-
       const payload = await this.authService.verifyToken(token);
       const user = payload && (await this.usersService.findById(payload.id));
 
@@ -76,23 +74,13 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new WsException('No room with this item id found.');
       }
     } catch (error) {
+      client.emit('error', { message: error.message });
       this.connections.delete(client.id);
       client.disconnect(true);
-
-      if (error instanceof WsException) {
-        throw error;
-      } else if (error instanceof NotFoundException) {
-        throw error;
-      } else {
-        throw new InternalServerErrorException(
-          'Error connecting client to server.',
-        );
-      }
     }
   }
 
   handleDisconnect(client: Socket) {
-    console.log('disconnet');
     this.connections.delete(client.id);
     client.disconnect(true);
   }

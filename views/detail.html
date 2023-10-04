@@ -84,6 +84,20 @@
         console.log('Disconnected from WebSocket server!');
       });
 
+      socket.on('error', (error) => {
+        if (error && error.message) {
+          if (error.message.startsWith('No room')) {
+            console.error('room error:', error.message);
+          } else if (error.message.startsWith('ITEM_ERROR:')) {
+            // Handle item-related error
+            console.error('Item error:', error.message);
+          } else {
+            // Handle other errors
+            console.error('Generic error:', error.message);
+          }
+        }
+      });
+
       function showMessage(message) {
         messages.textContent += `\n\n${message}`;
         messages.scrollTop = messages.scrollHeight;
