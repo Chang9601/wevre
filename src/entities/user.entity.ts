@@ -22,6 +22,9 @@ export class User extends Document {
   @Prop({ required: true, default: false })
   bidAgreement: boolean;
 
+  @Prop({ required: false })
+  refreshToken: string;
+
   @Prop({ default: Date.now })
   updatedAt: Date;
 

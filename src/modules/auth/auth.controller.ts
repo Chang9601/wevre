@@ -10,78 +10,131 @@ import {
   UseGuards,
   //SerializeOptions,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 
 import { CreateUserDto } from '../../dtos/create-user.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import RequestWithUser from './interfaces/request-with-user.interface';
+import { RequestWithUser } from './interfaces/request-with-user.interface';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import RolesGuard from './role/roles.guard';
-import Role from './role/role.enum';
+import { UsersService } from '../users/users.service';
+import { User } from '../../entities/user.entity';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 
 @Controller('auth')
 //@SerializeOptions({ 전역 설정 직렬화
 //  strategy: 'excludeAll',
 //})
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersSerivce: UsersService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('/signup')
   @HttpCode(HttpStatus.CREATED)
   async signup(@Body() createUserDto: CreateUserDto) {
     const { name, email, password } = createUserDto;
-    const id = await this.authService.signup(name, email, password);
-
-    return id;
+    return await this.authService.signup(name, email, password);
   }
 
   @Post('/signin')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   async signin(
-    @Req() req: RequestWithUser,
-    @Res({ passthrough: true }) res: Response,
+    @Req() request: RequestWithUser,
+    @Res({ passthrough: true }) response: Response,
   ) {
-    const user = req.user;
-    const { token } = await this.authService.signin(user._id);
-    const expiration = 1 * 24 * 60 * 60 * 1000;
+    let { user } = request;
+    const { accessToken } = await this.authService.createToken(user.id);
+    const { refreshToken } = await this.authService.createRefreshToken(user.id);
 
-    res
-      .cookie(`token`, token, {
+    await this.usersSerivce.setRefreshToken(refreshToken, user._id);
+
+    // 토큰에 접근해야 하기 때문에 httpOnly: false
+    response
+      .cookie(`access_token_${user.email}`, accessToken, {
         domain: '127.0.0.1',
         httpOnly: false,
         secure: false,
         sameSite: 'lax',
-        expires: new Date(Date.now() + expiration),
+        expires: new Date(
+          Date.now() +
+            parseInt(
+              this.configService.get<string>(
+                'JWT_ACCESS_TOKEN_EXPIRATION',
+              ) as string,
+            ),
+        ),
       })
-      .send({ message: 'success' });
+      .cookie(`refresh_token_${user.email}`, refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        expires: new Date(
+          Date.now() +
+            parseInt(
+              this.configService.get<string>(
+                'JWT_REFRESH_TOKEN_EXPIRATION',
+              ) as string,
+            ),
+        ),
+      });
+
+    user = {
+      name: user.name,
+      email: user.email,
+    } as User;
+
+    response.send(user);
   }
 
   @Post('/signout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  signout(@Res({ passthrough: true }) res: Response) {
-    res.cookie('token', '', {
-      maxAge: 0,
+  async signout(
+    @Req() request: RequestWithUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    await this.usersSerivce.removeRefreshToken(request.user.id);
+    response
+      .cookie('access_token', '', {
+        maxAge: 0,
+      })
+      .cookie('refresh_token', '', { maxAge: 0 });
+  }
+
+  @Get('/refresh')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtRefreshGuard)
+  async refreshToken(
+    @Req() request: RequestWithUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    let { user } = request;
+    const { accessToken } = await this.authService.createToken(user.id);
+
+    response.cookie(`access_token_{${user.email}}`, accessToken, {
+      httpOnly: false,
+      secure: false,
+      sameSite: 'lax',
+      expires: new Date(
+        Date.now() +
+          parseInt(
+            this.configService.get<string>(
+              'JWT_ACCESS_TOKEN_EXPIRATION',
+            ) as string,
+          ),
+      ),
     });
-  }
 
-  @Get('/token')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard, RolesGuard(Role.ADMIN))
-  getToken(@Req() req: RequestWithUser) {
-    const token = req.cookies.token;
+    user = {
+      name: user.name,
+      email: user.email,
+    } as User;
 
-    return token;
-  }
-
-  @Get('/user')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
-  getUser(@Req() req: RequestWithUser) {
-    const user = req.user;
-
-    return user;
+    response.send(user);
   }
 }

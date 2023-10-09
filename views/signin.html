@@ -47,7 +47,7 @@
           }).then((res) => {
             if (res.status === 200) {
               window.location.href = 'index.html';
-            } else if (res.status === 401) {
+            } else if (res.status === 400) {
               errorMessage.textContent = '잘못된 이메일 혹은 잘못된 비밀번호.';
             } else {
               errorMessage.textContent = '오류 발생.';

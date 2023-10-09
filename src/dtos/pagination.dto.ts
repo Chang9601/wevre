@@ -1,6 +1,7 @@
 import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { PAGINATION } from '../utils/pagination.enum';
 import { Type } from 'class-transformer';
+
+import { PAGINATION } from '../utils/pagination.enum';
 
 export class PaginationDto {
   @IsOptional()

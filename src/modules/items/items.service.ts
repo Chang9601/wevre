@@ -8,13 +8,13 @@ import { objectIdValidator } from '../../utils/objectid-validator';
 export class ItemsService {
   constructor(private readonly itemsRepository: ItemsRepository) {}
 
+  async find(limit: number, skip: number, search: string, sort: string) {
+    return await this.itemsRepository.find(limit, skip, search, sort);
+  }
+
   async findOne(id: MongooseSchema.Types.ObjectId) {
     objectIdValidator(id);
 
     return await this.itemsRepository.findOne(id);
-  }
-
-  async find(limit: number, skip: number, search: string, sort: string) {
-    return await this.itemsRepository.find(limit, skip, search, sort);
   }
 }

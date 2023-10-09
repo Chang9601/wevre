@@ -1,54 +1,92 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
-  UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { Schema as MongooseSchema } from 'mongoose';
 
 import { UsersService } from '../users/users.service';
-import TokenPayload from './interfaces/token-payload.interface';
+import { TokenPayload } from './interfaces/token-payload.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async signup(name: string, email: string, password: string) {
     return this.usersService.create(name, email, password);
   }
 
-  async findOne(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
+  async validate(email: string, password: string) {
+    try {
+      const user = await this.usersService.findByEmail(email);
+      const passwordMatch = await bcrypt.compare(password, user.password);
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+      if (!passwordMatch) {
+        throw new BadRequestException();
+      }
+
       return user;
-    }
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw new BadRequestException('Invalid email or password.');
+      }
 
-    throw new UnauthorizedException(
-      'Authentication failed. Invalid email or password.',
-    );
+      throw new InternalServerErrorException('Error comparing passwords.');
+    }
   }
 
-  async signin(id: MongooseSchema.Types.ObjectId) {
-    const payload: TokenPayload = { id };
-    const token = this.jwtService.sign(payload);
+  async createToken(id: MongooseSchema.Types.ObjectId) {
+    try {
+      const payload: TokenPayload = { id };
+      const accessToken = this.jwtService.sign(payload, {
+        secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
+        expiresIn: this.configService.get<string>(
+          'JWT_ACCESS_TOKEN_EXPIRATION',
+        ),
+      });
 
-    return { token };
+      return { accessToken };
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating access token.');
+    }
+  }
+
+  async createRefreshToken(id: MongooseSchema.Types.ObjectId) {
+    try {
+      const payload: TokenPayload = { id };
+      const refreshToken = this.jwtService.sign(payload, {
+        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+        expiresIn: this.configService.get<string>(
+          'JWT_REFRESH_TOKEN_EXPIRATION',
+        ),
+      });
+
+      return { refreshToken };
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating refresh token.');
+    }
   }
 
   async verifyToken(token: string) {
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET,
+        secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
       });
 
       return payload;
     } catch (error) {
-      throw new InternalServerErrorException('Error verifying JWT token.');
+      throw new InternalServerErrorException('Error verifying token.');
     }
   }
 }

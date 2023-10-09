@@ -20,6 +20,7 @@
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --maxWorkers=1"
   },
   "dependencies": {
+    "@hapi/joi": "^17.1.1",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
@@ -35,6 +36,7 @@
     "@nestjs/websockets": "^10.2.1",
     "@types/bcryptjs": "^2.4.2",
     "@types/cookie-parser": "^1.4.3",
+    "@types/hapi__joi": "^17.1.11",
     "@types/passport-jwt": "^3.0.9",
     "@types/passport-local": "^1.0.35",
     "@types/uuid": "^9.0.2",

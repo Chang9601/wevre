@@ -4,10 +4,10 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Schema as MongooseSchema } from 'mongoose';
+import { parse } from 'cookie';
 
 import { AuthService } from '../auth/auth.service';
 import { UsersService } from '../users/users.service';
@@ -15,11 +15,13 @@ import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
-  // UnauthorizedException,
+  UnauthorizedException,
+  // UseFilters,
 } from '@nestjs/common';
 import { RoomsService } from '../rooms/rooms.service';
 import { User } from '../../entities/user.entity';
 import { SendMessageDto } from '../../dtos/send-message.dto';
+//import { AllWsExceptionsFilter } from '../../filter/ws-exception.filter';
 
 @WebSocketGateway({
   cors: {
@@ -28,6 +30,7 @@ import { SendMessageDto } from '../../dtos/send-message.dto';
     credentials: true,
   },
 })
+//@UseFilters(new AllWsExceptionsFilter())
 export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -41,25 +44,29 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   async handleConnection(client: Socket) {
-    const token = client.handshake.auth.token;
-
-    if (!token) {
-      throw new WsException('You must provide a valid token to connect.');
-    }
-
-    let itemId: unknown = null;
-    itemId = client.handshake.query.id;
-
-    if (!itemId) {
-      throw new WsException('No item with this id found.');
-    }
-
     try {
-      const payload = await this.authService.verifyToken(token);
+      const email = client.handshake.query.email;
+      const cookie = client.handshake.headers.cookie;
+      const { [`access_token_${email}`]: accessToken } = parse(cookie);
+
+      if (!accessToken) {
+        throw new UnauthorizedException(
+          'You must provide a valid token to connect.',
+        );
+      }
+
+      let itemId: unknown = null;
+      itemId = client.handshake.query.id;
+
+      if (!itemId) {
+        throw new NotFoundException('No item with this id found.');
+      }
+
+      const payload = await this.authService.verifyToken(accessToken);
       const user = payload && (await this.usersService.findById(payload.id));
 
       if (!user) {
-        throw new WsException('No user with this token found.');
+        throw new UnauthorizedException('No user with this token found.');
       }
 
       const room = await this.roomsSerivce.findByItemId(
@@ -71,7 +78,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (room) {
         await this.joinRoom(client, user, room._id);
       } else {
-        throw new WsException('No room with this item id found.');
+        throw new NotFoundException('No room with this item id found.');
       }
     } catch (error) {
       client.emit('error', { message: error.message });
@@ -156,6 +163,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       sendMessageDto.userId = userId;
       sendMessageDto.roomId = user.room._id;
+      sendMessageDto.content = `${user.name}(${user.email}): ${sendMessageDto.content}`;
 
       await this.roomsSerivce.addMessage(sendMessageDto);
 

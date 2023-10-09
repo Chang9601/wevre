@@ -27,7 +27,7 @@ export class ItemsRepository {
       const category = await this.categoriesModel.findOne({ name: search });
 
       if (category) {
-        const items = await this.itemsModel
+        const items = (await this.itemsModel
           .find({
             category,
           })
@@ -36,7 +36,7 @@ export class ItemsRepository {
           .populate('materials')
           .skip(skip)
           .limit(limit)
-          .sort(sortQuery);
+          .sort(sortQuery)) as Item[];
 
         const count = items.length;
         const page = Math.ceil(skip / limit) + 1;
@@ -63,7 +63,8 @@ export class ItemsRepository {
       });
 
       const searchResults = await Promise.all(searchPromises);
-      const items = searchResults.find((result) => result.length > 0) || [];
+      const items = (searchResults.find((result) => result.length > 0) ||
+        []) as Item[];
       const count = items.length;
       const page = Math.ceil(skip / limit) + 1;
       const pages = Math.ceil(count / limit);
@@ -102,7 +103,7 @@ export class ItemsRepository {
       if (error instanceof NotFoundException) {
         throw error;
       } else {
-        throw new InternalServerErrorException('Error finding an itme by id.');
+        throw new InternalServerErrorException('Error finding an item by id.');
       }
     }
   }

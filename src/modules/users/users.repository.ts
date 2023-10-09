@@ -3,38 +3,32 @@ import { Model } from 'mongoose';
 import {
   ConflictException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Schema as MongooseSchema } from 'mongoose';
 
 import { User } from '../../entities/user.entity';
+import { MongoDbErrorCode } from 'src/database/mongodb-error-code.enum';
 
 export class UsersRepository {
   constructor(
     @InjectModel(User.name) private readonly usersModel: Model<User>,
   ) {}
 
-  async create(name: string, email: string, password: string) {
+  async create(name: string, email: string, password: string): Promise<User> {
     try {
-      let user = await this.findByEmail(email);
-
-      if (user) {
-        throw new ConflictException('User with this email already exists.');
-      }
-
-      user = new this.usersModel({
+      const user = new this.usersModel({
         name,
         email,
         password,
       });
 
-      user = await user.save();
-      return user._id;
+      return await user.save();
     } catch (error) {
-      if (error instanceof ConflictException) {
-        throw error;
-      } else {
-        throw new InternalServerErrorException('Error saving user.');
+      if (error?.code === MongoDbErrorCode.DUPLICATE_KEY) {
+        throw new ConflictException('User with this email already exists.');
       }
+      throw new InternalServerErrorException('Error saving user.');
     }
   }
 
@@ -57,15 +51,33 @@ export class UsersRepository {
 
   async findByEmail(email: string): Promise<User> {
     try {
-      return await this.usersModel.findOne({ email });
+      const user = await this.usersModel.findOne({ email });
+      if (!user) {
+        throw new NotFoundException('User with this email not found.');
+      }
+
+      return user;
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
       throw new InternalServerErrorException('Error finding user by email.');
     }
   }
   async findById(_id: MongooseSchema.Types.ObjectId): Promise<User> {
     try {
-      return await this.usersModel.findOne({ _id });
+      const user = await this.usersModel.findOne({ _id });
+      if (!user) {
+        throw new NotFoundException('User with this email not found.');
+      }
+
+      return user;
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
       throw new InternalServerErrorException('Error finding user by id.');
     }
   }
