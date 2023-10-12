@@ -11,7 +11,7 @@ import {
   //SerializeOptions,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
+import { CookieOptions, Response } from 'express';
 
 import { CreateUserDto } from '../../dtos/create-user.dto';
 import { AuthService } from './auth.service';
@@ -53,22 +53,24 @@ export class AuthController {
 
     await this.usersSerivce.setRefreshToken(refreshToken, user._id);
 
-    // 토큰에 접근해야 하기 때문에 httpOnly: false
+    const options = {
+      //domain: '127.0.0.1',
+      httpOnly: false,
+      secure: false,
+      sameSite: 'lax',
+      expires: new Date(
+        Date.now() +
+          parseInt(
+            this.configService.get<string>(
+              'JWT_ACCESS_TOKEN_EXPIRATION',
+            ) as string,
+          ),
+      ),
+    } as CookieOptions;
+
+    // 프론트엔드가 토큰에 접근해야 하기 때문에 httpOnly: false
     response
-      .cookie(`access_token_${user.email}`, accessToken, {
-        domain: '127.0.0.1',
-        httpOnly: false,
-        secure: false,
-        sameSite: 'lax',
-        expires: new Date(
-          Date.now() +
-            parseInt(
-              this.configService.get<string>(
-                'JWT_ACCESS_TOKEN_EXPIRATION',
-              ) as string,
-            ),
-        ),
-      })
+      .cookie(`access_token_${user.email}`, accessToken, options)
       .cookie(`refresh_token_${user.email}`, refreshToken, {
         httpOnly: true,
         secure: false,

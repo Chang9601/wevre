@@ -9,13 +9,16 @@ import * as cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
+import { CustomSocketIoAdapter } from './modules/bids/adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const corsOptions: CorsOptions = {
     origin:
-      process.env.NODE_ENV === 'production' ? false : ['http://127.0.0.1:3000'],
+      process.env.NODE_ENV === 'production'
+        ? false
+        : ['http://127.0.0.1:3000', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST'],
   };
@@ -28,6 +31,8 @@ async function bootstrap() {
       skipMissingProperties: true,
     }),
   );
+
+  app.useWebSocketAdapter(new CustomSocketIoAdapter(app));
 
   app.use(cookieParser());
 

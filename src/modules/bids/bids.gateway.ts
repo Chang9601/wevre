@@ -1,6 +1,7 @@
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -22,16 +23,21 @@ import { RoomsService } from '../rooms/rooms.service';
 import { User } from '../../entities/user.entity';
 import { SendMessageDto } from '../../dtos/send-message.dto';
 //import { AllWsExceptionsFilter } from '../../filter/ws-exception.filter';
+import * as Cookie from 'cookie';
 
 @WebSocketGateway({
   cors: {
     origin:
-      process.env.NODE_ENV === 'production' ? false : ['http://127.0.0.1:3000'],
+      process.env.NODE_ENV === 'production'
+        ? false
+        : ['http://127.0.0.1:3000', 'http://localhost:3000'],
     credentials: true,
   },
 })
 //@UseFilters(new AllWsExceptionsFilter())
-export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class BidsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -43,10 +49,29 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly roomsSerivce: RoomsService,
   ) {}
 
+  afterInit(server: Server) {
+    server.use((socket, next) => {
+      const setCookie = Cookie.serialize('session_id', '14142414', {
+        httpOnly: false,
+        secure: false,
+        sameSite: 'lax',
+        expires: new Date(Date.now() + 1800000),
+      });
+
+      socket.handshake.headers['set-cookie'] = [setCookie];
+      next();
+    });
+  }
+
   async handleConnection(client: Socket) {
     try {
+      // client.emit('session', {
+      //   session_id: parse(client.handshake.headers.cookie),
+      // });
+
       const email = client.handshake.query.email;
       const cookie = client.handshake.headers.cookie;
+      console.log(cookie);
       const { [`access_token_${email}`]: accessToken } = parse(cookie);
 
       if (!accessToken) {
@@ -99,6 +124,11 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     roomId: MongooseSchema.Types.ObjectId,
   ) {
     try {
+      const cookie = client.handshake.headers.cookie;
+      const { session_id: sessionId } = parse(cookie);
+
+      console.log(sessionId);
+
       const room = await this.roomsSerivce.findById(roomId);
 
       if (!room) {
@@ -167,7 +197,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       await this.roomsSerivce.addMessage(sendMessageDto);
 
-      // Except the sender
+      // Broadcast except the sender
       // with ACK
       client.broadcast.timeout(5000).emit('message', sendMessageDto.content);
     } catch (error) {
