@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 
 import { Room } from './room.entity';
-import Role from '../modules/auth/role/role.enum';
+import Role from '../modules/auth/roles/role.enum';
 
 @Schema()
 export class User extends Document {

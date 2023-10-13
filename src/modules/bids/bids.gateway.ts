@@ -1,7 +1,6 @@
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
-  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -23,7 +22,6 @@ import { RoomsService } from '../rooms/rooms.service';
 import { User } from '../../entities/user.entity';
 import { SendMessageDto } from '../../dtos/send-message.dto';
 //import { AllWsExceptionsFilter } from '../../filter/ws-exception.filter';
-import * as Cookie from 'cookie';
 
 @WebSocketGateway({
   cors: {
@@ -35,9 +33,7 @@ import * as Cookie from 'cookie';
   },
 })
 //@UseFilters(new AllWsExceptionsFilter())
-export class BidsGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -49,20 +45,6 @@ export class BidsGateway
     private readonly roomsSerivce: RoomsService,
   ) {}
 
-  afterInit(server: Server) {
-    server.use((socket, next) => {
-      const setCookie = Cookie.serialize('session_id', '14142414', {
-        httpOnly: false,
-        secure: false,
-        sameSite: 'lax',
-        expires: new Date(Date.now() + 1800000),
-      });
-
-      socket.handshake.headers['set-cookie'] = [setCookie];
-      next();
-    });
-  }
-
   async handleConnection(client: Socket) {
     try {
       // client.emit('session', {
@@ -71,7 +53,10 @@ export class BidsGateway
 
       const email = client.handshake.query.email;
       const cookie = client.handshake.headers.cookie;
-      console.log(cookie);
+
+      const { session_id: sessionId } = parse(cookie);
+      console.log(sessionId);
+      console.log(client.id);
       const { [`access_token_${email}`]: accessToken } = parse(cookie);
 
       if (!accessToken) {
@@ -124,11 +109,6 @@ export class BidsGateway
     roomId: MongooseSchema.Types.ObjectId,
   ) {
     try {
-      const cookie = client.handshake.headers.cookie;
-      const { session_id: sessionId } = parse(cookie);
-
-      console.log(sessionId);
-
       const room = await this.roomsSerivce.findById(roomId);
 
       if (!room) {
