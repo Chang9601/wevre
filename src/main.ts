@@ -1,8 +1,5 @@
-import { NestFactory /*Reflector*/ } from '@nestjs/core';
-import {
-  /*ClassSerializerInterceptor*/
-  ValidationPipe,
-} from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import * as cookieParser from 'cookie-parser';
@@ -35,8 +32,6 @@ async function bootstrap() {
   app.useWebSocketAdapter(new SocketIoAdapter(app));
 
   app.use(cookieParser());
-
-  // app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   const config = new DocumentBuilder()
     .setTitle('Wevre')

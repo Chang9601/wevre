@@ -59,6 +59,8 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(client.id);
       const { [`access_token_${email}`]: accessToken } = parse(cookie);
 
+      console.log('hhhhhhhhhhhhhhhhhhhhhhhh');
+
       if (!accessToken) {
         throw new UnauthorizedException(
           'You must provide a valid token to connect.',

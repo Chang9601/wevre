@@ -8,7 +8,6 @@ import {
   Req,
   Res,
   UseGuards,
-  //SerializeOptions,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
@@ -24,9 +23,6 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { createCookieOptions } from '../../utils/cookie-options.factory';
 
 @Controller('auth')
-//@SerializeOptions({ 전역 설정 직렬화
-//  strategy: 'excludeAll',
-//})
 export class AuthController {
   constructor(
     private readonly authService: AuthService,

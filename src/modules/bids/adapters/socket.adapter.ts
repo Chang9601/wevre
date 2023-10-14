@@ -1,61 +1,67 @@
-import { Injectable } from '@nestjs/common';
+import { INestApplicationContext } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { ServerOptions } from 'socket.io';
-import { parse } from 'cookie';
+import { Server, ServerOptions } from 'socket.io';
+import * as Cookie from 'cookie';
 
-import { SetCookieType } from '../types/set-cookie.type';
+//import { SetCookieType } from '../types/set-cookie.type';
+import { AuthService } from '../../../modules/auth/auth.service';
+import { UsersService } from '../../../modules/users/users.service';
 
-@Injectable()
 export class SocketIoAdapter extends IoAdapter {
-  // private authService: AuthService;
-  // private usersService: UsersService;
+  private readonly authService: AuthService;
+  private readonly usersService: UsersService;
 
-  // constructor(private app: INestApplicationContext) {
-  //   super(app);
-  //   this.app.resolve<AuthService>(AuthService).then((authService) => {
-  //     this.authService = authService;
-  //   });
+  constructor(private app: INestApplicationContext) {
+    super(app);
+    this.authService = this.app.get(AuthService);
+    this.usersService = this.app.get(UsersService);
+  }
 
-  //   this.app.resolve<UsersService>(UsersService).then((usersService) => {
-  //     this.usersService = usersService;
-  //   });
-  // }
+  create(port: number, options?: ServerOptions): Server {
+    const server = super.create(port, options);
+
+    server.engine.on('initial_headers', (headers, _) => {
+      headers['set-cookie'] = Cookie.serialize('session_id', 'vzvxvz', {
+        path: '/',
+        sameSite: 'strict',
+        expires: new Date(Date.now() + 1800000),
+      });
+    });
+
+    return server;
+  }
 
   createIOServer(port: number, options?: ServerOptions): any {
-    // options.allowRequest = async (request, allowFunction) => {
-    //   const cookie = request.headers.cookie;
+    // const server = super.createIOServer(port, options);
 
-    //   const { [`access_token_dongim@naver.com`]: accessToken } = parse(cookie);
-
-    //   if (accessToken) {
-    //     const payload = await this.authService.verifyToken(accessToken);
-    //     if (payload) {
-    //       const user = await this.usersService.findById(payload.id);
-
-    //       if (user) {
-    //         return allowFunction(null, true);
-    //       }
-    //     }
-    //   }
-
-    //   return allowFunction('Unauthorized', false);
-    // };
+    // server.engine.on('initial_headers', (headers, _) => {
+    //   headers['set-cookie'] = Cookie.serialize('session_id', '12311323', {
+    //     path: '/',
+    //     sameSite: 'strict',
+    //   });
+    // });
 
     options.allowRequest = async (request, allowFunction) => {
       const cookie = request.headers.cookie;
-      const { session_id: sessionId } = parse(cookie);
 
-      if (!sessionId) {
-        const setCookie: SetCookieType = {
-          name: 'session_id',
-          httpOnly: false,
-          secure: false,
-          sameSite: 'strict',
-          expires: new Date(Date.now() + 1800000),
-        };
+      const {
+        [`access_token_dongim@naver.com`]: accessToken,
+        session_id: sessionId,
+      } = Cookie.parse(cookie);
 
-        options.cookie = setCookie;
+      const isTokenVerified =
+        accessToken && (await this.authService.verifyToken(accessToken));
+      const doesUserExist =
+        isTokenVerified &&
+        (await this.usersService.findById(isTokenVerified.id));
+
+      if (!isTokenVerified || !doesUserExist) {
+        console.log('123131');
+        return allowFunction('Unauthorized', false);
       }
+
+      console.log(`accessToken: ${accessToken}`);
+      console.log(`sessionId: ${sessionId}`);
 
       return allowFunction(null, true);
     };
