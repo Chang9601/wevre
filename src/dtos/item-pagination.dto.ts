@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 
 import { PAGINATION } from '../utils/pagination.enum';
 
-export class PaginationDto {
+export class ItemPaginationDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
