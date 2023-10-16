@@ -47,7 +47,6 @@
         const cookies = document.cookie.split('; ');
         for (const cookie of cookies) {
           const [cookieName, cookieValue] = cookie.split('=');
-          console.log(cookieName);
           if (cookieName === name) {
             return decodeURIComponent(cookieValue);
           }
@@ -75,13 +74,13 @@
       const socket = io(`http://127.0.0.1:3000`, {
         withCredentials: true,
         extraHeaders: {
-          'access_token_dongim@naver.com': getCookie(
-            'access_token_dongim@naver.com',
+          'access_token_silvia@naver.com': getCookie(
+            'access_token_silvia@naver.com',
           ),
           session_id: getCookie('session_id'),
         },
         query: {
-          email: 'dongim@naver.com',
+          email: 'silvia@naver.com',
           id: itemId,
         },
       });
@@ -107,6 +106,8 @@
       });
 
       socket.on('error', (error) => {
+        //console.error(error);
+
         if (error && error.message) {
           if (error.message.startsWith('No room')) {
             console.error('room error:', error.message);

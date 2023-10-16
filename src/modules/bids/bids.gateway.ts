@@ -55,8 +55,8 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const cookie = client.handshake.headers.cookie;
 
       const { session_id: sessionId } = parse(cookie);
-      console.log(sessionId);
-      console.log(client.id);
+      console.log(`sessionId: ${sessionId}`);
+      console.log(`clientId: ${client.id}`);
       const { [`access_token_${email}`]: accessToken } = parse(cookie);
 
       console.log('hhhhhhhhhhhhhhhhhhhhhhhh');
