@@ -61,8 +61,8 @@ export class AuthController {
 
     // 프론트엔드가 토큰에 접근해야 하기 때문에 접근 토큰은 httpOnly: false
     response
-      .cookie(`access_token_${user.email}`, accessToken, accessTokenOptions)
-      .cookie(`refresh_token_${user.email}`, refreshToken, refreshTokenOptions);
+      .cookie(`access_token`, accessToken, accessTokenOptions)
+      .cookie(`refresh_token`, refreshToken, refreshTokenOptions);
 
     user = {
       name: user.name,
@@ -101,11 +101,7 @@ export class AuthController {
       this.configService.get<string>('JWT_ACCESS_TOKEN_EXPIRATION'),
     );
 
-    response.cookie(
-      `access_token_{${user.email}}`,
-      accessToken,
-      accessTokenOptions,
-    );
+    response.cookie(`access_token`, accessToken, accessTokenOptions);
 
     user = {
       name: user.name,

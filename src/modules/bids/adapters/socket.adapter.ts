@@ -5,6 +5,7 @@ import { serialize, parse } from 'cookie';
 
 import { AuthService } from '../../../modules/auth/auth.service';
 import { UsersService } from '../../../modules/users/users.service';
+import { randomUUID } from 'crypto';
 
 export class SocketIoAdapter extends IoAdapter {
   private readonly authService: AuthService;
@@ -19,12 +20,8 @@ export class SocketIoAdapter extends IoAdapter {
   createIOServer(port: number, options?: ServerOptions): any {
     options.allowRequest = async (request, allowFunction) => {
       const cookie = request.headers.cookie;
-      console.log('xxxxxxxxxxx');
 
-      const {
-        [`access_token_silvia@naver.com`]: accessToken,
-        session_id: sessionId,
-      } = parse(cookie);
+      const { access_token: accessToken } = parse(cookie);
 
       const isTokenVerified =
         accessToken && (await this.authService.verifyToken(accessToken));
@@ -33,26 +30,32 @@ export class SocketIoAdapter extends IoAdapter {
         (await this.usersService.findById(isTokenVerified.id));
 
       if (!isTokenVerified || !doesUserExist) {
-        console.log('123131');
         return allowFunction('Unauthorized', false);
       }
-
-      console.log(`accessToken: ${accessToken}`);
-      console.log(`sessionId: ${sessionId}`);
 
       return allowFunction(null, true);
     };
 
     const server: Server = super.createIOServer(port, options);
 
-    server.engine.on('initial_headers', (headers, _) => {
-      headers['set-cookie'] = serialize('session_id', '12311323', {
-        path: '/',
-        sameSite: 'strict',
-        expires: new Date(Date.now() + 1800000),
-      });
+    server.engine.on('initial_headers', (headers, request) => {
+      const session = this.getCookie('session_id', request);
+      if (!session) {
+        headers['set-cookie'] = serialize(`session_id`, randomUUID(), {
+          path: '/',
+          httpOnly: true,
+          secure: false,
+          sameSite: 'strict',
+          expires: new Date(Date.now() + 1800000),
+        });
+      }
     });
 
     return server;
+  }
+
+  private getCookie(name: string, request: any) {
+    const cookies = parse(request.headers.cookie || '');
+    return cookies[name];
   }
 }

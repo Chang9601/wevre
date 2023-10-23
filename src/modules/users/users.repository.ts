@@ -65,6 +65,7 @@ export class UsersRepository {
       throw new InternalServerErrorException('Error finding user by email.');
     }
   }
+
   async findById(_id: MongooseSchema.Types.ObjectId): Promise<User> {
     try {
       const user = await this.usersModel.findOne({ _id });

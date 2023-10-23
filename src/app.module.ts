@@ -13,11 +13,10 @@ import { ItemsModule } from './modules/items/items.module';
 import { BidsModule } from './modules/bids/bids.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { AuthModule } from './modules/auth/auth.module';
-
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseConfigService } from './config/mongoose-config.service';
-import { AllHttpExceptionFilter } from './filter/all-exception.filter';
+import { AllExceptionFilter } from './filter/all-exception.filter';
 
 @Module({
   imports: [
@@ -56,7 +55,7 @@ import { AllHttpExceptionFilter } from './filter/all-exception.filter';
     AppService,
     {
       provide: APP_FILTER,
-      useClass: AllHttpExceptionFilter,
+      useClass: AllExceptionFilter,
     },
   ],
 })

@@ -59,12 +59,13 @@
       const messages = document.querySelector('#messages');
       const messageBox = document.querySelector('#messageBox');
 
+      const sessionId = getCookie('session_id');
+
       const socket = io(`http://127.0.0.1:3000`, {
         withCredentials: true,
         extraHeaders: {
-          'access_token_changsup@naver.com': getCookie(
-            'access_token_changsup@naver.com',
-          ),
+          access_token: getCookie('access_token'),
+          session_id: sessionId,
         },
         query: {
           email: 'changsup@naver.com',
@@ -72,16 +73,23 @@
         },
       });
 
-      socket.on('connect', () => {
-        console.log('Connected to WebSocket server!');
+      socket.on('session', (data) => {
+        console.log(data);
+      });
 
-        socket.on('join', (data) => {
-          showMessage(data);
+      if (!sessionId) {
+        socket.on('connect', () => {
+          console.log(socket);
+          console.log('Connected to WebSocket server!');
         });
+      }
 
-        socket.on('message', (data) => {
-          showMessage(data);
-        });
+      socket.on('join', (data) => {
+        showMessage(data);
+      });
+
+      socket.on('message', (data) => {
+        showMessage(data);
       });
 
       socket.on('disconnect', () => {
@@ -89,10 +97,12 @@
       });
 
       socket.on('error', (error) => {
+        //console.error(error);
+
         if (error && error.message) {
           if (error.message.startsWith('No room')) {
-            console.error('room error:', error.message);
-          } else if (error.message.startsWith('ITEM_ERROR:')) {
+            console.error('Room error:', error.message);
+          } else if (error.message.startsWith('No item')) {
             // Handle item-related error
             console.error('Item error:', error.message);
           } else {
