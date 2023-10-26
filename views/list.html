@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>List</title>
+    <script
+      src="https://cdn.socket.io/4.6.0/socket.io.min.js"
+      integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
+      crossorigin="anonymous"
+    ></script>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -60,14 +65,32 @@
     </div>
 
     <script>
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+      }
+
+      const socket = io(`http://127.0.0.1:3000`, {
+        withCredentials: true,
+        extraHeaders: {
+          access_token: getCookie('access_token'),
+          session_id: getCookie('session_id'),
+        },
+      });
+
+      socket.connect();
+      socket.disconnect();
+
       let currentPage = 1;
       let itemsPerPage = 10;
 
       async function fetchItems(page, limit) {
-        const res = await fetch(
+        const response = await fetch(
           `http://127.0.0.1:3000/items?sort=high&skip=${page}&limit=${limit}`,
         );
-        const data = await res.json();
+        const data = await response.json();
 
         const itemList = document.getElementById('item-list');
         itemList.innerHTML = '';

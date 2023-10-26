@@ -1,7 +1,6 @@
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
-  //OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -22,10 +21,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { RoomsService } from '../rooms/rooms.service';
-import { User } from '../../entities/user.entity';
 import { SendMessageDto } from '../../dtos/send-message.dto';
 import { WebsocketExceptionFilter } from '../../filter/ws-exception.filter';
 import { WsJwtAuthGuard } from './guards/ws-jwt-auth.guard';
+import { LeaveRoomDto } from 'src/dtos/leave-room.dto';
+import { JoinRoomDto } from 'src/dtos/join-room.dto';
 
 @WebSocketGateway({
   cors: {
@@ -42,6 +42,8 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
+  connections: Map<string, MongooseSchema.Types.ObjectId> = new Map();
+
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
@@ -51,29 +53,31 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(client: Socket) {
     try {
       const cookie = client.handshake.headers.cookie;
-      const { session_id: sessionId } = parse(cookie);
+      const [itemId] = client.handshake.query.item_id;
+      const roomId: unknown = client.handshake.query.room_id;
 
-      let itemId: unknown = null;
-      itemId = client.handshake.query.id;
+      const { session_id: sessionId } = parse(cookie);
+      const { access_token: accessToken } = parse(cookie);
+
+      const payload = await this.authService.verifyToken(accessToken);
+      const user = payload && (await this.usersService.findById(payload.id));
+
+      if (sessionId) {
+        this.connections.set(sessionId, user._id);
+        console.log(this.connections);
+      }
 
       if (!itemId) {
         throw new WsException('No item with this id found.');
       }
 
-      const room = await this.roomsSerivce.findByItemId(
-        itemId as MongooseSchema.Types.ObjectId,
-      );
-
-      if (!room) {
-        throw new WsException('No room with this item id found.');
+      if (!roomId) {
+        throw new WsException('No room with this id found.');
       }
 
-      // already in the room
-      if (sessionId) {
-        return;
-      }
-
-      await this.joinRoom(client, room._id);
+      await this.joinRoom(client, {
+        roomId: roomId as MongooseSchema.Types.ObjectId,
+      });
     } catch (error) {
       client.send(error.message);
       client.disconnect(true);
@@ -81,56 +85,65 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
+    const { sessionId } = client.handshake.auth;
+
+    this.connections.delete(sessionId);
     client.disconnect(true);
   }
 
   @SubscribeMessage('join')
-  async joinRoom(client: Socket, roomId: MongooseSchema.Types.ObjectId) {
+  async joinRoom(client: Socket, joinRoomDto: JoinRoomDto) {
     try {
-      const cookie = client.handshake.headers.cookie;
-      const { access_token: accessToken } = parse(cookie);
+      // const cookie = client.handshake.headers.cookie;
+      // const { session_id: sessionId } = parse(cookie);
+      const { roomId } = joinRoomDto;
+      // const userId = this.connections.get(sessionId);
 
-      const payload = await this.authService.verifyToken(accessToken);
-      const user = payload && (await this.usersService.findById(payload.id));
-
-      const room = await this.roomsSerivce.findById(roomId);
-      const updateUserDto: Partial<User> = {
-        room: room,
-      };
-
-      await this.usersService.update(user._id, updateUserDto);
+      // const user = await this.usersService.findById(userId);
       await client.join(roomId.toString());
-      this.server.emit(
-        'join',
-        `${user.name}(${user.email})님이 참가하셨습니다.`,
-      );
+
+      // const sockets = await this.server.in(roomId.toString()).fetchSockets();
+      // for (const socket of sockets) {
+      //   const otherCookie = socket.handshake.headers.cookie;
+      //   const { session_id: otherSessionId } = parse(otherCookie);
+      //   if (sessionId !== otherSessionId) {
+      //     this.server
+      //       .to(socket.id)
+      //       .emit('join', `${user.name}(${user.email})님이 참가하셨습니다.`);
+      //   }
+      // }
     } catch (error) {
       client.disconnect(true);
 
-      throw new WsException('Error joining room.');
+      throw new WsException('Error joining a room.');
     }
   }
 
   @SubscribeMessage('leave')
-  async leaveRoom(client: Socket, roomId: MongooseSchema.Types.ObjectId) {
+  async leaveRoom(client: Socket, leaveRoomDto: LeaveRoomDto) {
     try {
-      const cookie = client.handshake.headers.cookie;
-      const { access_token: accessToken } = parse(cookie);
+      // const cookie = client.handshake.headers.cookie;
+      // const { session_id: sessionId } = parse(cookie);
+      const { roomId } = leaveRoomDto;
+      // const userId = this.connections.get(sessionId);
 
-      const payload = await this.authService.verifyToken(accessToken);
-      const user = payload && (await this.usersService.findById(payload.id));
+      // const user = await this.usersService.findById(userId);
+      await client.leave(roomId.toString());
 
-      const updateUserDto: Partial<User> = {
-        room: null,
-      };
-
-      await this.usersService.update(user._id, updateUserDto);
-
-      client.leave(roomId.toString());
+      // const sockets = await this.server.in(roomId.toString()).fetchSockets();
+      // for (const socket of sockets) {
+      //   const otherCookie = socket.handshake.headers.cookie;
+      //   const { session_id: otherSessionId } = parse(otherCookie);
+      //   if (sessionId !== otherSessionId) {
+      //     this.server
+      //       .to(socket.id)
+      //       .emit('leave', `${user.name}(${user.email})님이 나가셨습니다.`);
+      //   }
+      // }
     } catch (error) {
       client.disconnect(true);
 
-      throw new WsException('Error leaving room.');
+      throw new WsException('Error leaving a room.');
     }
   }
 
@@ -138,22 +151,34 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async sendMessage(client: Socket, sendMessageDto: SendMessageDto) {
     try {
       const cookie = client.handshake.headers.cookie;
-      const { access_token: accessToken } = parse(cookie);
+      const { session_id: sessionId } = parse(cookie);
+      const userId = this.connections.get(sessionId);
+      const user = await this.usersService.findById(userId);
 
-      const payload = await this.authService.verifyToken(accessToken);
-      const user = payload && (await this.usersService.findById(payload.id));
+      let message: string;
+      sendMessageDto.userId = userId;
+      const sockets = await this.server
+        .in(sendMessageDto.roomId.toString())
+        .fetchSockets();
 
-      sendMessageDto.userId = user._id;
-      sendMessageDto.roomId = user.room._id;
-      sendMessageDto.content = `${user.name}(${user.email}): ${sendMessageDto.content}`;
+      for (const socket of sockets) {
+        const otherCookie = socket.handshake.headers.cookie;
+        const { session_id: otherSessionId } = parse(otherCookie);
+
+        if (sessionId === otherSessionId) {
+          message = `본인: ${sendMessageDto.content}`;
+        } else {
+          message = `${user.name}(${user.email}): ${sendMessageDto.content}`;
+        }
+
+        client.to(socket.id).emit('message', message);
+      }
 
       await this.roomsSerivce.addMessage(sendMessageDto);
-
-      client.broadcast.emit('message', sendMessageDto.content);
     } catch (error) {
       client.disconnect(true);
 
-      throw new WsException('Error sending message,');
+      throw new WsException('Error sending a message.');
     }
   }
 }

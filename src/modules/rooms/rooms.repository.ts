@@ -68,7 +68,7 @@ export class RoomsRepository {
     } catch (error) {
       await session.abortTransaction();
 
-      throw new InternalServerErrorException('Error saving room.');
+      throw new InternalServerErrorException('Error creating a room.');
     } finally {
       session.endSession();
     }
@@ -78,15 +78,17 @@ export class RoomsRepository {
     try {
       return this.roomsModel.findOne({ _id });
     } catch (error) {
-      throw new InternalServerErrorException('Error finding room by id.');
+      throw new InternalServerErrorException('Error finding a room by id.');
     }
   }
 
   async findByItemId(_id: MongooseSchema.Types.ObjectId): Promise<Room> {
     try {
-      return this.roomsModel.findOne({ 'item._id': _id });
+      return this.roomsModel.findOne({ 'item._id': _id }).select('_id');
     } catch (error) {
-      throw new InternalServerErrorException('Error finding room by item id.');
+      throw new InternalServerErrorException(
+        'Error finding a room by item id.',
+      );
     }
   }
 
@@ -101,7 +103,7 @@ export class RoomsRepository {
       message = await message.save();
       return message._id;
     } catch (error) {
-      throw new InternalServerErrorException('Error adding message to room.');
+      throw new InternalServerErrorException('Error adding a message to room.');
     }
   }
 

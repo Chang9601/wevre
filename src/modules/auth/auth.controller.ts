@@ -80,11 +80,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     await this.usersSerivce.removeRefreshToken(request.user.id);
-    response
-      .cookie('access_token', '', {
-        maxAge: 0,
-      })
-      .cookie('refresh_token', '', { maxAge: 0 });
+    response.clearCookie('access_token').clearCookie('refresh_token');
   }
 
   @Get('/refresh')

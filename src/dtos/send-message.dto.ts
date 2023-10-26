@@ -12,4 +12,8 @@ export class SendMessageDto {
   @IsOptional()
   @IsMongoId()
   userId?: MongooseSchema.Types.ObjectId;
+
+  @IsOptional()
+  @IsString()
+  sessionId?: string;
 }

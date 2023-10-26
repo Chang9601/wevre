@@ -22,6 +22,9 @@
     <button id="send" title="Send Message!" style="width: 100%; height: 30px">
       입찰
     </button>
+    <button id="leave" title="Send Message!" style="width: 100%; height: 30px">
+      나가기
+    </button>
 
     <script>
       function getQueryParams() {
@@ -56,76 +59,97 @@
 
     <script>
       const sendButton = document.querySelector('#send');
+      const leaveButton = document.querySelector('#leave');
       const messages = document.querySelector('#messages');
       const messageBox = document.querySelector('#messageBox');
 
-      const sessionId = getCookie('session_id');
+      async function create(itemId) {
+        try {
+          const response = await fetch(`http://127.0.0.1:3000/rooms/${itemId}`);
+          const data = await response.json();
+          const roomId = data._id;
 
-      const socket = io(`http://127.0.0.1:3000`, {
-        withCredentials: true,
-        extraHeaders: {
-          access_token: getCookie('access_token'),
-          session_id: sessionId,
-        },
-        query: {
-          email: 'changsup@naver.com',
-          id: itemId,
-        },
-      });
+          const socket = io(`http://127.0.0.1:3000`, {
+            withCredentials: true,
+            extraHeaders: {
+              access_token: getCookie('access_token'),
+              session_id: getCookie('session_id'),
+            },
+            query: {
+              email: 'changsup@naver.com',
+              item_id: itemId,
+              room_id: roomId,
+            },
+          });
 
-      socket.on('session', (data) => {
-        console.log(data);
-      });
+          socket.on('connect', () => {
+            console.log(socket);
+            console.log('Connected to WebSocket server!');
+          });
 
-      if (!sessionId) {
-        socket.on('connect', () => {
-          console.log(socket);
-          console.log('Connected to WebSocket server!');
-        });
+          socket.on('join', (data) => {
+            showMessage(data);
+          });
+
+          socket.on('leave', (data) => {
+            showMessage(data);
+          });
+
+          socket.on('message', (data) => {
+            showMessage(data);
+          });
+
+          socket.on('disconnect', () => {
+            console.log('Disconnected from WebSocket server!');
+          });
+
+          socket.on('error', (error) => {
+            if (error && error.message) {
+              if (error.message.startsWith('No room')) {
+                console.error('Room error:', error.message);
+              } else if (error.message.startsWith('No item')) {
+                // Handle item-related error
+                console.error('Item error:', error.message);
+              } else {
+                // Handle other errors
+                console.error('Generic error:', error.message);
+              }
+            }
+          });
+
+          sendButton.onclick = function () {
+            if (socket.connected) {
+              socket.emit('message', {
+                content: messageBox.value,
+                roomId: roomId,
+                sessionId: getCookie('session_id'),
+              });
+              showMessage(`본인: ${messageBox.value}`);
+            } else {
+              showMessage('No WebSocket connection :(');
+            }
+          };
+
+          leaveButton.onclick = function () {
+            if (socket.connected) {
+              socket.emit('leave', { roomId });
+              window.history.back();
+            } else {
+              showMessage('No WebSocket connection :(');
+            }
+          };
+        } catch (error) {
+          console.log('No room for this item.');
+        }
       }
 
-      socket.on('join', (data) => {
-        showMessage(data);
-      });
-
-      socket.on('message', (data) => {
-        showMessage(data);
-      });
-
-      socket.on('disconnect', () => {
-        console.log('Disconnected from WebSocket server!');
-      });
-
-      socket.on('error', (error) => {
-        //console.error(error);
-
-        if (error && error.message) {
-          if (error.message.startsWith('No room')) {
-            console.error('Room error:', error.message);
-          } else if (error.message.startsWith('No item')) {
-            // Handle item-related error
-            console.error('Item error:', error.message);
-          } else {
-            // Handle other errors
-            console.error('Generic error:', error.message);
-          }
-        }
-      });
+      create(itemId);
 
       function showMessage(message) {
         messages.textContent += `\n\n${message}`;
         messages.scrollTop = messages.scrollHeight;
         messageBox.value = '';
       }
-
-      sendButton.onclick = function () {
-        if (socket.connected) {
-          socket.emit('message', { content: messageBox.value });
-          showMessage(`본인: ${messageBox.value}`);
-        } else {
-          showMessage('No WebSocket connection :(');
-        }
-      };
     </script>
   </body>
 </html>

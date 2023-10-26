@@ -43,7 +43,7 @@ export class SocketIoAdapter extends IoAdapter {
       if (!session) {
         headers['set-cookie'] = serialize(`session_id`, randomUUID(), {
           path: '/',
-          httpOnly: true,
+          httpOnly: false,
           secure: false,
           sameSite: 'strict',
           expires: new Date(Date.now() + 1800000),

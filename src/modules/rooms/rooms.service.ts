@@ -24,15 +24,13 @@ export class RoomsService {
   async findById(id: MongooseSchema.Types.ObjectId) {
     objectIdValidator(id);
 
-    const room = await this.roomsRepository.findById(id);
-    return room;
+    return await this.roomsRepository.findById(id);
   }
 
   async findByItemId(id: MongooseSchema.Types.ObjectId) {
     objectIdValidator(id);
 
-    const room = await this.roomsRepository.findByItemId(id);
-    return room;
+    return await this.roomsRepository.findByItemId(id);
   }
 
   async addMessage(sendMessageDto: SendMessageDto) {

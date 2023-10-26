@@ -28,7 +28,7 @@ export class UsersRepository {
       if (error?.code === MongoDbErrorCode.DUPLICATE_KEY) {
         throw new ConflictException('User with this email already exists.');
       }
-      throw new InternalServerErrorException('Error saving user.');
+      throw new InternalServerErrorException('Error creating a user.');
     }
   }
 
@@ -45,7 +45,7 @@ export class UsersRepository {
 
       return updatedUser;
     } catch (error) {
-      throw new InternalServerErrorException('Error updating user.');
+      throw new InternalServerErrorException('Error updating a user.');
     }
   }
 
@@ -62,7 +62,7 @@ export class UsersRepository {
         throw error;
       }
 
-      throw new InternalServerErrorException('Error finding user by email.');
+      throw new InternalServerErrorException('Error finding a user by email.');
     }
   }
 
@@ -79,7 +79,7 @@ export class UsersRepository {
         throw error;
       }
 
-      throw new InternalServerErrorException('Error finding user by id.');
+      throw new InternalServerErrorException('Error finding a user by id.');
     }
   }
 }

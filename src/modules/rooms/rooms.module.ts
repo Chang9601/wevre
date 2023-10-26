@@ -8,6 +8,7 @@ import { ItemsModule } from '../items/items.module';
 import { Message, MessageSchema } from '../../entities/message.entity';
 import { UsersModule } from '../users/users.module';
 import { Item, ItemSchema } from '../../entities/item.entity';
+import { RoomsController } from './rooms.controller';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { Item, ItemSchema } from '../../entities/item.entity';
     UsersModule,
     ItemsModule,
   ],
+  controllers: [RoomsController],
   providers: [RoomsService, RoomsRepository],
   exports: [RoomsService],
 })
