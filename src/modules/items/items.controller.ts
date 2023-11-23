@@ -9,7 +9,7 @@ import {
 import { Schema as MongooseSchema } from 'mongoose';
 
 import { ItemsService } from './items.service';
-import { ItemPaginationDto } from '../../dtos/item-pagination.dto';
+import { PaginationDto } from '../../dtos/pagination.dto';
 
 @Controller('items')
 export class ItemsController {
@@ -17,10 +17,8 @@ export class ItemsController {
 
   @Get('/')
   @HttpCode(HttpStatus.OK)
-  async getItems(@Query() itemPaginationDto: ItemPaginationDto) {
-    const { limit, skip, search, sort } = itemPaginationDto;
-
-    return await this.itemsService.find(limit, skip, search, sort);
+  async getItems(@Query() paginationDto: PaginationDto) {
+    return await this.itemsService.find(paginationDto);
   }
 
   @Get('/:id')

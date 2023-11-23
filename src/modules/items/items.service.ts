@@ -3,13 +3,14 @@ import { Schema as MongooseSchema } from 'mongoose';
 
 import { ItemsRepository } from './items.repository';
 import { objectIdValidator } from '../../utils/objectid-validator';
+import { PaginationDto } from '../../dtos/pagination.dto';
 
 @Injectable()
 export class ItemsService {
   constructor(private readonly itemsRepository: ItemsRepository) {}
 
-  async find(limit: number, skip: number, search: string, sort: string) {
-    return await this.itemsRepository.find(limit, skip, search, sort);
+  async find(paginationDto: PaginationDto) {
+    return await this.itemsRepository.find(paginationDto);
   }
 
   async findOne(id: MongooseSchema.Types.ObjectId) {

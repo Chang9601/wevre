@@ -27,6 +27,10 @@
     </button>
 
     <script>
+      function isNumeric(input) {
+        return !isNaN(input) && isFinite(input) && input !== '';
+      }
+
       function getQueryParams() {
         const queryParams = {};
         const queryString = window.location.search.slice(1);
@@ -76,15 +80,13 @@
               session_id: getCookie('session_id'),
             },
             query: {
-              email: 'changsup@naver.com',
               item_id: itemId,
               room_id: roomId,
             },
           });
 
           socket.on('connect', () => {
-            console.log(socket);
-            console.log('Connected to WebSocket server!');
+            console.log('Connected to WebSocket server.');
           });
 
           socket.on('join', (data) => {
@@ -100,18 +102,29 @@
           });
 
           socket.on('disconnect', () => {
-            console.log('Disconnected from WebSocket server!');
+            console.log('Disconnected from WebSocket server.');
           });
 
           socket.on('error', (error) => {
+            console.log(error.message);
             if (error && error.message) {
               if (error.message.startsWith('No room')) {
+                showMessage('경매방이 존재하지 않습니다!');
                 console.error('Room error:', error.message);
               } else if (error.message.startsWith('No item')) {
-                // Handle item-related error
+                showMessage('상품이 존재하지 않습니다!');
                 console.error('Item error:', error.message);
+              } else if (error.message.startsWith('Error joining')) {
+                showMessage('경매방 입장 중 오류가 발생했습니다!');
+                console.error('Joining error:', error.message);
+              } else if (error.message.startsWith('Error leaving')) {
+                showMessage('경매방 퇴장 중 오류가 발생했습니다!');
+                console.error('Leaving error:', error.message);
+              } else if (error.message.startsWith('Error sending')) {
+                showMessage('입찰 중 오류가 발생했습니다!');
+                console.error('Messaging error:', error.message);
               } else {
-                // Handle other errors
+                showMessage('오류가 발생했습니다!');
                 console.error('Generic error:', error.message);
               }
             }
@@ -119,14 +132,20 @@
 
           sendButton.onclick = function () {
             if (socket.connected) {
-              socket.emit('message', {
-                content: messageBox.value,
-                roomId: roomId,
-                sessionId: getCookie('session_id'),
-              });
-              showMessage(`본인: ${messageBox.value}`);
+              const messageContent = messageBox.value.trim();
+
+              if (isNumeric(messageContent)) {
+                socket.emit('message', {
+                  content: messageContent,
+                  roomId: roomId,
+                  sessionId: getCookie('session_id'),
+                });
+                showMessage(`본인: ${messageBox.value}`);
+              } else {
+                showMessage(' 숫자만 입력할 수 있습니다!');
+              }
             } else {
-              showMessage('No WebSocket connection :(');
+              showMessage('연결이 되어있지 않습니다!');
             }
           };
 
@@ -135,11 +154,12 @@
               socket.emit('leave', { roomId });
               window.history.back();
             } else {
-              showMessage('No WebSocket connection :(');
+              showMessage('연결이 되어있지 않습니다!');
             }
           };
         } catch (error) {
-          console.log('No room for this item.');
+          showMessage('경매방이 존재하지 않습니다!');
+          console.error('Room error: No room for this item.');
         }
       }
 

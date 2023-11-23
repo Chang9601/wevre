@@ -8,6 +8,7 @@ import {
 import { Item } from '../../entities/item.entity';
 import { QueryBuilder } from '../../utils/query-builder';
 import { Category } from '../../entities/category.entity';
+import { PaginationDto } from '../../dtos/pagination.dto';
 
 export class ItemsRepository {
   constructor(
@@ -16,8 +17,10 @@ export class ItemsRepository {
     private readonly categoriesModel: Model<Category>,
   ) {}
 
-  async find(limit: number, skip: number, search: string, sort: string) {
+  async find(paginationDto: PaginationDto) {
     try {
+      const { offset, limit, search, sort } = paginationDto;
+
       const queryBuilder = new QueryBuilder(search, sort);
 
       const sortQuery = queryBuilder.buildSortQuery();
@@ -34,12 +37,12 @@ export class ItemsRepository {
           .select('-createdAt -updatedAt')
           .populate('category')
           .populate('materials')
-          .skip(skip)
+          .skip(offset)
           .limit(limit)
           .sort(sortQuery)) as Item[];
 
         const count = items.length;
-        const page = Math.ceil(skip / limit) + 1;
+        const page = Math.ceil(offset / limit) + 1;
         const pages = Math.ceil(count / limit);
 
         return { items, page, pages, count };
@@ -57,7 +60,7 @@ export class ItemsRepository {
           .select('-createdAt -updatedAt')
           .populate('category')
           .populate('materials')
-          .skip(skip)
+          .skip(offset)
           .limit(limit)
           .sort(sortQuery);
       });
@@ -66,7 +69,7 @@ export class ItemsRepository {
       const items = (searchResults.find((result) => result.length > 0) ||
         []) as Item[];
       const count = items.length;
-      const page = Math.ceil(skip / limit) + 1;
+      const page = Math.ceil(offset / limit) + 1;
       const pages = Math.ceil(count / limit);
 
       return { items, page, pages, count };

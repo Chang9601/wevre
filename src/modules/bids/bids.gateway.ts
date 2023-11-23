@@ -64,7 +64,6 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (sessionId) {
         this.connections.set(sessionId, user._id);
-        console.log(this.connections);
       }
 
       if (!itemId) {
@@ -79,13 +78,14 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         roomId: roomId as MongooseSchema.Types.ObjectId,
       });
     } catch (error) {
-      client.send(error.message);
+      client.emit('error', error);
       client.disconnect(true);
     }
   }
 
   handleDisconnect(client: Socket) {
-    const { sessionId } = client.handshake.auth;
+    const cookie = client.handshake.headers.cookie;
+    const { session_id: sessionId } = parse(cookie);
 
     this.connections.delete(sessionId);
     client.disconnect(true);
@@ -113,9 +113,9 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   }
       // }
     } catch (error) {
+      error.message = 'Error joining a room.';
+      client.emit('error', error);
       client.disconnect(true);
-
-      throw new WsException('Error joining a room.');
     }
   }
 
@@ -141,9 +141,9 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   }
       // }
     } catch (error) {
+      error.message = 'Error leaving a room.';
+      console.log('error', error);
       client.disconnect(true);
-
-      throw new WsException('Error leaving a room.');
     }
   }
 
@@ -176,9 +176,10 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       await this.roomsSerivce.addMessage(sendMessageDto);
     } catch (error) {
-      client.disconnect(true);
+      error.message = 'Error sending a message.';
 
-      throw new WsException('Error sending a message.');
+      client.emit('error', error);
+      client.disconnect(true);
     }
   }
 }
