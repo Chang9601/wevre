@@ -84,10 +84,10 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    const cookie = client.handshake.headers.cookie;
-    const { session_id: sessionId } = parse(cookie);
+    //const cookie = client.handshake.headers.cookie;
+    //const { session_id: sessionId } = parse(cookie);
 
-    this.connections.delete(sessionId);
+    //this.connections.delete(sessionId);
     client.disconnect(true);
   }
 

@@ -21,6 +21,13 @@ export class RoomsService {
     this.roomsRepository.create();
   }
 
+  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+  //   timeZone: 'Asia/Seoul',
+  // })
+  // async delete() {
+  //   this.roomsRepository.delete();
+  // }
+
   async findById(id: MongooseSchema.Types.ObjectId) {
     objectIdValidator(id);
 

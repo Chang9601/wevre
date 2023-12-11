@@ -6,7 +6,7 @@ import * as cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-//import { SocketIoAdapter } from './modules/bids/adapters/socket.adapter';
+import { SocketIoAdapter } from './modules/bids/adapters/socket.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -29,7 +29,7 @@ async function bootstrap() {
     }),
   );
 
-  // app.useWebSocketAdapter(new SocketIoAdapter(app));
+  app.useWebSocketAdapter(new SocketIoAdapter(app));
 
   app.use(cookieParser());
 

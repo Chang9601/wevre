@@ -62,12 +62,51 @@
     </script>
 
     <script>
+      function showMessage(message) {
+        messages.textContent += `\n\n${message}`;
+        messages.scrollTop = messages.scrollHeight;
+        messageBox.value = '';
+      }
+
+      function showHighestBid(text) {
+        const textElement = document.createElement('div');
+        textElement.style.position = 'absolute';
+        textElement.style.top = '10px';
+        textElement.style.right = '10px';
+        textElement.style.backgroundColor = 'lightgray';
+        textElement.style.padding = '5px';
+        textElement.textContent = text;
+
+        const existingTextElement = document.querySelector('#rightCornerText');
+        if (existingTextElement) {
+          existingTextElement.remove();
+        }
+
+        textElement.id = 'rightCornerText';
+        document.body.appendChild(textElement);
+      }
+
+      async function getHighestBid(itemId) {
+        try {
+          const response = await fetch(`http://127.0.0.1:3000/bids/${itemId}`);
+          const data = await response.json();
+          const bid = data;
+
+          const bidInfo = bid
+            ? `최고 입찰가: ${bid.price}원 ${bid.name}(${bid.email})`
+            : '';
+          showHighestBid(bidInfo);
+        } catch (error) {
+          console.error('Bid error:', error.message);
+        }
+      }
+
       const sendButton = document.querySelector('#send');
       const leaveButton = document.querySelector('#leave');
       const messages = document.querySelector('#messages');
       const messageBox = document.querySelector('#messageBox');
 
-      async function create(itemId) {
+      async function manageSocket(itemId) {
         try {
           const response = await fetch(`http://127.0.0.1:3000/rooms/${itemId}`);
           const data = await response.json();
@@ -145,17 +184,16 @@
                 showMessage(' 숫자만 입력할 수 있습니다!');
               }
             } else {
-              showMessage('연결이 되어있지 않습니다!');
+              showMessage('실시간 연결이 되어있지 않습니다!');
             }
           };
 
           leaveButton.onclick = function () {
             if (socket.connected) {
               socket.emit('leave', { roomId });
-              window.history.back();
-            } else {
-              showMessage('연결이 되어있지 않습니다!');
             }
+
+            window.history.back();
           };
         } catch (error) {
           showMessage('경매방이 존재하지 않습니다!');
@@ -163,13 +201,8 @@
         }
       }
 
-      create(itemId);
-
-      function showMessage(message) {
-        messages.textContent += `\n\n${message}`;
-        messages.scrollTop = messages.scrollHeight;
-        messageBox.value = '';
-      }
+      manageSocket(itemId);
+      getHighestBid(itemId);
     </script>
   </body>
 </html>
