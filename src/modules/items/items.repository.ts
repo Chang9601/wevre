@@ -98,7 +98,7 @@ export class ItemsRepository {
       }
 
       if (!item) {
-        throw new NotFoundException('Item with this id not found.');
+        throw new NotFoundException('No item with this id found.');
       }
 
       return item;

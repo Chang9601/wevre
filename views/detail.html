@@ -28,7 +28,7 @@
 
     <script>
       function isNumeric(input) {
-        return !isNaN(input) && isFinite(input) && input !== '';
+        return !isNaN(input) && isFinite(input) && input !== '' && input > 0;
       }
 
       function getQueryParams() {
@@ -89,12 +89,19 @@
       async function getHighestBid(itemId) {
         try {
           const response = await fetch(`http://127.0.0.1:3000/bids/${itemId}`);
-          const data = await response.json();
-          const bid = data;
+          const bid = await response.json();
 
-          const bidInfo = bid
-            ? `최고 입찰가: ${bid.price}원 ${bid.name}(${bid.email})`
-            : '';
+          if (bid.hasOwnProperty('statusCode')) {
+            throw new Error('No room for this item found.');
+          }
+
+          const price = bid.price;
+
+          const bidInfo =
+            price === 0
+              ? `입찰 없음`
+              : `최고 입찰가: ${bid.price}원 - ${bid.name}(${bid.email})`;
+
           showHighestBid(bidInfo);
         } catch (error) {
           console.error('Bid error:', error.message);
@@ -181,7 +188,7 @@
                 });
                 showMessage(`본인: ${messageBox.value}`);
               } else {
-                showMessage(' 숫자만 입력할 수 있습니다!');
+                showMessage('숫자만 입력할 수 있습니다!');
               }
             } else {
               showMessage('실시간 연결이 되어있지 않습니다!');
@@ -197,7 +204,7 @@
           };
         } catch (error) {
           showMessage('경매방이 존재하지 않습니다!');
-          console.error('Room error: No room for this item.');
+          console.error('Room error: No room for this item found.');
         }
       }
 
