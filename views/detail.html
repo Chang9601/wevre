@@ -28,7 +28,8 @@
 
     <script>
       function isNumeric(input) {
-        return !isNaN(input) && isFinite(input) && input !== '' && input > 0;
+        //return !isNaN(input) && isFinite(input) && input !== '' && input > 0;
+        return /^[1-9][0-9]*$/.test(input);
       }
 
       function getQueryParams() {
@@ -143,8 +144,9 @@
             showMessage(data);
           });
 
-          socket.on('message', (data) => {
+          socket.on('message', async (data) => {
             showMessage(data);
+            await getHighestBid(itemId);
           });
 
           socket.on('disconnect', () => {
@@ -208,8 +210,8 @@
         }
       }
 
-      manageSocket(itemId);
       getHighestBid(itemId);
+      manageSocket(itemId);
     </script>
   </body>
 </html>
