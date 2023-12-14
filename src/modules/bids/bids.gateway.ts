@@ -161,17 +161,27 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         .in(sendMessageDto.roomId.toString())
         .fetchSockets();
 
+      console.log(`size: ${sockets.length}`);
+      console.log(`client-id: ${client.id}`);
+
       for (const socket of sockets) {
-        const otherCookie = socket.handshake.headers.cookie;
-        const { session_id: otherSessionId } = parse(otherCookie);
+        //const otherCookie = socket.handshake.headers.cookie;
+        // const { session_id: otherSessionId } = parse(otherCookie);
 
-        if (sessionId === otherSessionId) {
-          message = `본인: ${sendMessageDto.content}`;
+        //if (sessionId === otherSessionId) {
+        //message = `본인: ${sendMessageDto.content}`;
+        //  } else {
+        message = `${user.name}(${user.email}): ${sendMessageDto.content}`;
+        // }
+
+        console.log(`socket-id: ${socket.id}`);
+
+        if (client.id === socket.id) {
+          client.emit('message');
         } else {
-          message = `${user.name}(${user.email}): ${sendMessageDto.content}`;
+          ///   console.log('called');
+          client.to(socket.id).emit('message', message);
         }
-
-        client.to(socket.id).emit('message', message);
       }
 
       await this.roomsSerivce.addMessage(sendMessageDto);

@@ -4,26 +4,81 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+      .container {
+        width: 300px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        text-align: center;
+        margin: 0 0 20px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+      label,
+      input[type='email'],
+      input[type='password'],
+      input[type='submit'] {
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 250px;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+      }
+      input[type='submit'] {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+      }
+      input[type='submit']:hover {
+        background-color: #0056b3;
+      }
+      #error-message {
+        text-align: center;
+        color: red;
+        margin-top: 10px;
+      }
+    </style>
   </head>
   <body>
-    <h1>로그인</h1>
-    <form id="signin-form">
-      <label for="signin-email">이메일:</label>
-      <input type="email" id="signin-email" name="email" required /><br /><br />
+    <div class="container">
+      <h1>로그인</h1>
+      <form id="signin-form">
+        <label for="signin-email">이메일</label>
+        <input type="email" id="signin-email" name="email" required />
 
-      <label for="signin-password">비밀번호:</label>
-      <input
-        type="password"
-        id="signin-password"
-        name="password"
-        required
-      /><br /><br />
+        <label for="signin-password">비밀번호</label>
+        <input type="password" id="signin-password" name="password" required />
 
-      <input type="submit" value="로그인" />
-    </form>
+        <input type="submit" value="로그인" />
+      </form>
 
-    <!-- Placeholder for the error message -->
-    <p id="error-message"></p>
+      <!-- Placeholder for the error message -->
+      <p id="error-message"></p>
+    </div>
 
     <script>
       document

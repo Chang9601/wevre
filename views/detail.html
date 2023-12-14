@@ -9,26 +9,54 @@
       integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
       crossorigin="anonymous"
     ></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      #messages {
+        height: 400px;
+        overflow: scroll;
+        width: 90%;
+        max-width: 600px;
+      }
+
+      #messageBox {
+        display: block;
+        width: 90%;
+        margin-bottom: 10px;
+        padding: 10px;
+        max-width: 600px;
+      }
+
+      #send,
+      #leave {
+        width: 90%;
+        height: 30px;
+        max-width: 600px;
+      }
+    </style>
   </head>
   <body>
     <h1></h1>
-    <pre id="messages" style="height: 400px; overflow: scroll"></pre>
-    <input
-      type="text"
-      id="messageBox"
-      placeholder="입찰 가격을 입력하세요."
-      style="display: block; width: 100%; margin-bottom: 10px; padding: 10px"
-    />
-    <button id="send" title="Send Message!" style="width: 100%; height: 30px">
-      입찰
-    </button>
-    <button id="leave" title="Send Message!" style="width: 100%; height: 30px">
-      나가기
-    </button>
+    <pre id="messages"></pre>
+    <input type="text" id="messageBox" placeholder="입찰 가격을 입력하세요." />
+    <button id="send" title="Send Message">입찰</button>
+    <button id="leave" title="Leave Room">나가기</button>
 
     <script>
       function isNumeric(input) {
-        //return !isNaN(input) && isFinite(input) && input !== '' && input > 0;
         return /^[1-9][0-9]*$/.test(input);
       }
 
@@ -69,22 +97,45 @@
         messageBox.value = '';
       }
 
-      function showHighestBid(text) {
-        const textElement = document.createElement('div');
-        textElement.style.position = 'absolute';
-        textElement.style.top = '10px';
-        textElement.style.right = '10px';
-        textElement.style.backgroundColor = 'lightgray';
-        textElement.style.padding = '5px';
-        textElement.textContent = text;
+      function showError(message) {
+        const centerElement = document.createElement('div'); // Create a container for centered content
+        centerElement.style.textAlign = 'center'; // Center align content
+        const errorElement = document.createElement('div'); // Create an element for the error message
+        errorElement.textContent = message; // Set the error message text
+        errorElement.style.color = 'red'; // Set error message color to red
 
-        const existingTextElement = document.querySelector('#rightCornerText');
-        if (existingTextElement) {
-          existingTextElement.remove();
+        const existingErrorElement = document.querySelector('#centeredError'); // Check if already exists
+        if (existingErrorElement) {
+          existingErrorElement.remove(); // Remove the existing centered error element
         }
 
-        textElement.id = 'rightCornerText';
-        document.body.appendChild(textElement);
+        errorElement.id = 'errorMessage'; // Set an ID for the error message element
+        centerElement.id = 'centeredError'; // Set an ID for the centered container
+        centerElement.appendChild(errorElement); // Append error message inside the centered container
+
+        const messagesContainer = document.querySelector('#messages');
+        messagesContainer.insertAdjacentElement('afterend', centerElement); // Place the centered container below the messages
+      }
+
+      function showBidStatus(text) {
+        const centerElement = document.createElement('div'); // Create a container for centered content
+        centerElement.style.textAlign = 'center'; // Center align content
+        const bidInfoElement = document.createElement('div'); // Create an element for bid information
+        bidInfoElement.textContent = text; // Set the bid information text
+        bidInfoElement.style.fontWeight = 'bold'; // Make the text bold
+
+        const existingCenterElement =
+          document.querySelector('#centeredBidInfo'); // Check if already exists
+        if (existingCenterElement) {
+          existingCenterElement.remove(); // Remove the existing centered element
+        }
+
+        bidInfoElement.id = 'bidInfo'; // Set an ID for the bid information element
+        centerElement.id = 'centeredBidInfo'; // Set an ID for the centered container
+        centerElement.appendChild(bidInfoElement); // Append bid info inside the centered container
+
+        const h1Element = document.querySelector('h1');
+        h1Element.insertAdjacentElement('afterend', centerElement); // Place the centered container below '종료'
       }
 
       async function getHighestBid(itemId) {
@@ -103,7 +154,7 @@
               ? `입찰 없음`
               : `최고 입찰가: ${bid.price}원 - ${bid.name}(${bid.email})`;
 
-          showHighestBid(bidInfo);
+          showBidStatus(bidInfo);
         } catch (error) {
           console.error('Bid error:', error.message);
         }
@@ -157,22 +208,22 @@
             console.log(error.message);
             if (error && error.message) {
               if (error.message.startsWith('No room')) {
-                showMessage('경매방이 존재하지 않습니다!');
+                showError('경매방이 존재하지 않습니다!');
                 console.error('Room error:', error.message);
               } else if (error.message.startsWith('No item')) {
-                showMessage('상품이 존재하지 않습니다!');
+                showError('상품이 존재하지 않습니다!');
                 console.error('Item error:', error.message);
               } else if (error.message.startsWith('Error joining')) {
-                showMessage('경매방 입장 중 오류가 발생했습니다!');
+                showError('경매방 입장 중 오류가 발생했습니다!');
                 console.error('Joining error:', error.message);
               } else if (error.message.startsWith('Error leaving')) {
-                showMessage('경매방 퇴장 중 오류가 발생했습니다!');
+                showError('경매방 퇴장 중 오류가 발생했습니다!');
                 console.error('Leaving error:', error.message);
               } else if (error.message.startsWith('Error sending')) {
-                showMessage('입찰 중 오류가 발생했습니다!');
+                showError('입찰 중 오류가 발생했습니다!');
                 console.error('Messaging error:', error.message);
               } else {
-                showMessage('오류가 발생했습니다!');
+                showError('오류가 발생했습니다!');
                 console.error('Generic error:', error.message);
               }
             }
@@ -190,10 +241,10 @@
                 });
                 showMessage(`본인: ${messageBox.value}`);
               } else {
-                showMessage('숫자만 입력할 수 있습니다!');
+                showError('숫자만 입력할 수 있습니다!');
               }
             } else {
-              showMessage('실시간 연결이 되어있지 않습니다!');
+              showError('실시간 연결이 되어있지 않습니다!');
             }
           };
 
@@ -205,7 +256,7 @@
             window.history.back();
           };
         } catch (error) {
-          showMessage('경매방이 존재하지 않습니다!');
+          showError('경매방이 존재하지 않습니다!');
           console.error('Room error: No room for this item found.');
         }
       }
