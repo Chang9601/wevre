@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 
 import { Room } from './room.entity';
 import { User } from './user.entity';
+import { Item } from './item.entity';
 
 @Schema()
 export class Message extends Document {
@@ -23,6 +24,10 @@ export class Message extends Document {
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'Room' })
   @Type(() => Room)
   room: Room;
+
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'Item' })
+  @Type(() => Room)
+  item: Item;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

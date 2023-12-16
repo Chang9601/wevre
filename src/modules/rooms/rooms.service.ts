@@ -6,27 +6,29 @@ import { RoomsRepository } from './rooms.repository';
 import { objectIdValidator } from '../../utils/objectid-validator';
 import { SendMessageDto } from '../../dtos/send-message.dto';
 import { UsersRepository } from '../users/users.repository';
+import { ItemsRepository } from '../items/items.repository';
 
 @Injectable()
 export class RoomsService {
   constructor(
-    private readonly roomsRepository: RoomsRepository,
     private readonly usersRepository: UsersRepository,
+    private readonly itemsRepository: ItemsRepository,
+    private readonly roomsRepository: RoomsRepository,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+  @Cron(CronExpression.EVERY_MINUTE, {
     timeZone: 'Asia/Seoul',
   })
   async create() {
     this.roomsRepository.create();
   }
 
-  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
-  //   timeZone: 'Asia/Seoul',
-  // })
-  // async delete() {
-  //   this.roomsRepository.delete();
-  // }
+  @Cron(CronExpression.EVERY_MINUTE, {
+    timeZone: 'Asia/Seoul',
+  })
+  async delete() {
+    this.roomsRepository.delete();
+  }
 
   async findById(id: MongooseSchema.Types.ObjectId) {
     objectIdValidator(id);
@@ -41,14 +43,16 @@ export class RoomsService {
   }
 
   async addMessage(sendMessageDto: SendMessageDto) {
-    const { content, userId, roomId } = sendMessageDto;
+    const { content, userId, itemId, roomId } = sendMessageDto;
 
     const user = await this.usersRepository.findById(userId);
+    const item = await this.itemsRepository.findOne(itemId);
     const room = await this.findById(roomId);
 
     const messageId = await this.roomsRepository.addMessage(
       content,
       user,
+      item,
       room,
     );
 

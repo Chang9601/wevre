@@ -142,7 +142,6 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // }
     } catch (error) {
       error.message = 'Error leaving a room.';
-      console.log('error', error);
       client.disconnect(true);
     }
   }
@@ -161,31 +160,19 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         .in(sendMessageDto.roomId.toString())
         .fetchSockets();
 
-      console.log(`size: ${sockets.length}`);
-      console.log(`client-id: ${client.id}`);
-
       for (const socket of sockets) {
-        //const otherCookie = socket.handshake.headers.cookie;
-        // const { session_id: otherSessionId } = parse(otherCookie);
-
-        //if (sessionId === otherSessionId) {
-        //message = `본인: ${sendMessageDto.content}`;
-        //  } else {
         message = `${user.name}(${user.email}): ${sendMessageDto.content}`;
-        // }
-
-        console.log(`socket-id: ${socket.id}`);
 
         if (client.id === socket.id) {
           client.emit('message');
         } else {
-          ///   console.log('called');
           client.to(socket.id).emit('message', message);
         }
       }
 
       await this.roomsSerivce.addMessage(sendMessageDto);
     } catch (error) {
+      console.log(error);
       error.message = 'Error sending a message.';
 
       client.emit('error', error);

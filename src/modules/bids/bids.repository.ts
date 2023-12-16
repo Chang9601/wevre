@@ -32,6 +32,8 @@ export class BidsRepository {
 
       const highestBid: Bid = {
         price: 0,
+        userId: undefined,
+        roomId: undefined,
       };
 
       if (!bid) {

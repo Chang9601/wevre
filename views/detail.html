@@ -92,69 +92,76 @@
 
     <script>
       function showMessage(message) {
+        if (message === undefined) {
+          return;
+        }
         messages.textContent += `\n\n${message}`;
         messages.scrollTop = messages.scrollHeight;
         messageBox.value = '';
       }
 
       function showError(message) {
-        const centerElement = document.createElement('div'); // Create a container for centered content
-        centerElement.style.textAlign = 'center'; // Center align content
-        const errorElement = document.createElement('div'); // Create an element for the error message
-        errorElement.textContent = message; // Set the error message text
-        errorElement.style.color = 'red'; // Set error message color to red
+        const centerElement = document.createElement('div');
+        centerElement.style.textAlign = 'center';
+        const errorElement = document.createElement('div');
+        errorElement.textContent = message;
+        errorElement.style.color = 'red';
 
-        const existingErrorElement = document.querySelector('#centeredError'); // Check if already exists
+        const existingErrorElement = document.querySelector('#centeredError');
         if (existingErrorElement) {
-          existingErrorElement.remove(); // Remove the existing centered error element
+          existingErrorElement.remove();
         }
 
-        errorElement.id = 'errorMessage'; // Set an ID for the error message element
-        centerElement.id = 'centeredError'; // Set an ID for the centered container
-        centerElement.appendChild(errorElement); // Append error message inside the centered container
+        errorElement.id = 'errorMessage';
+        centerElement.id = 'centeredError';
+        centerElement.appendChild(errorElement);
 
         const messagesContainer = document.querySelector('#messages');
-        messagesContainer.insertAdjacentElement('afterend', centerElement); // Place the centered container below the messages
-      }
-
-      function showBidStatus(text) {
-        const centerElement = document.createElement('div'); // Create a container for centered content
-        centerElement.style.textAlign = 'center'; // Center align content
-        const bidInfoElement = document.createElement('div'); // Create an element for bid information
-        bidInfoElement.textContent = text; // Set the bid information text
-        bidInfoElement.style.fontWeight = 'bold'; // Make the text bold
-
-        const existingCenterElement =
-          document.querySelector('#centeredBidInfo'); // Check if already exists
-        if (existingCenterElement) {
-          existingCenterElement.remove(); // Remove the existing centered element
-        }
-
-        bidInfoElement.id = 'bidInfo'; // Set an ID for the bid information element
-        centerElement.id = 'centeredBidInfo'; // Set an ID for the centered container
-        centerElement.appendChild(bidInfoElement); // Append bid info inside the centered container
-
-        const h1Element = document.querySelector('h1');
-        h1Element.insertAdjacentElement('afterend', centerElement); // Place the centered container below '종료'
+        messagesContainer.insertAdjacentElement('afterend', centerElement);
       }
 
       async function getHighestBid(itemId) {
+        const response = await fetch(`http://127.0.0.1:3000/bids/${itemId}`);
+        const bid = await response.json();
+
+        return bid;
+      }
+
+      async function showBidStatus() {
         try {
-          const response = await fetch(`http://127.0.0.1:3000/bids/${itemId}`);
-          const bid = await response.json();
+          const bid = await getHighestBid(itemId);
 
           if (bid.hasOwnProperty('statusCode')) {
             throw new Error('No room for this item found.');
           }
 
           const price = bid.price;
+          const name = bid.name;
+          const email = bid.email;
 
           const bidInfo =
             price === 0
               ? `입찰 없음`
-              : `최고 입찰가: ${bid.price}원 - ${bid.name}(${bid.email})`;
+              : `최고 입찰가: ${price}원 - ${name}(${email})`;
 
-          showBidStatus(bidInfo);
+          const centerElement = document.createElement('div');
+          centerElement.style.textAlign = 'center';
+          const bidInfoElement = document.createElement('div');
+          bidInfoElement.textContent = bidInfo;
+          bidInfoElement.style.fontWeight = 'bold';
+
+          const existingCenterElement =
+            document.querySelector('#centeredBidInfo');
+          if (existingCenterElement) {
+            existingCenterElement.remove();
+          }
+
+          bidInfoElement.id = 'bidInfo';
+          centerElement.id = 'centeredBidInfo';
+          centerElement.appendChild(bidInfoElement);
+
+          const h1Element = document.querySelector('h1');
+          h1Element.insertAdjacentElement('afterend', centerElement);
         } catch (error) {
           console.error('Bid error:', error.message);
         }
@@ -197,7 +204,7 @@
 
           socket.on('message', async (data) => {
             showMessage(data);
-            await getHighestBid(itemId);
+            await showBidStatus();
           });
 
           socket.on('disconnect', () => {
@@ -205,7 +212,6 @@
           });
 
           socket.on('error', (error) => {
-            console.log(error.message);
             if (error && error.message) {
               if (error.message.startsWith('No room')) {
                 showError('경매방이 존재하지 않습니다!');
@@ -229,17 +235,25 @@
             }
           });
 
-          sendButton.onclick = function () {
+          sendButton.onclick = async function () {
             if (socket.connected) {
               const messageContent = messageBox.value.trim();
 
               if (isNumeric(messageContent)) {
-                socket.emit('message', {
-                  content: messageContent,
-                  roomId: roomId,
-                  sessionId: getCookie('session_id'),
-                });
-                showMessage(`본인: ${messageBox.value}`);
+                const bid = await getHighestBid(itemId);
+                const price = bid.price;
+
+                if (price >= messageContent) {
+                  showError('최고 입찰가보다 높은 입찰만 가능합니다!');
+                } else {
+                  socket.emit('message', {
+                    content: messageContent,
+                    sessionId: getCookie('session_id'),
+                    itemId: itemId,
+                    roomId: roomId,
+                  });
+                  showMessage(`본인: ${messageBox.value}`);
+                }
               } else {
                 showError('숫자만 입력할 수 있습니다!');
               }
@@ -261,7 +275,7 @@
         }
       }
 
-      getHighestBid(itemId);
+      showBidStatus();
       manageSocket(itemId);
     </script>
   </body>

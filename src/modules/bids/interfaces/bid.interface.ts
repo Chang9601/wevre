@@ -5,4 +5,6 @@ export interface Bid {
   price: number;
   name?: string;
   email?: string;
+  userId: MongooseSchema.Types.ObjectId;
+  roomId: MongooseSchema.Types.ObjectId;
 }

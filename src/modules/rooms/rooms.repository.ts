@@ -74,6 +74,56 @@ export class RoomsRepository {
     }
   }
 
+  async delete() {
+    const session = await this.connection.startSession();
+    session.startTransaction();
+
+    try {
+      const items = await this.itemsModel.find();
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+
+        const startDate = item.startDate;
+        const endDate = item.endDate;
+
+        const today = moment(new Date());
+
+        if (!today.isBetween(startDate, endDate)) {
+          const room = await this.findByItemId(item._id);
+
+          if (room) {
+            item.auctionStatus = false;
+
+            const highestBid = await this.messagesModel
+              .findOne({ room: room })
+              .sort({ content: -1 })
+              .collation({ locale: 'en_US', numericOrdering: true });
+
+            await item.save();
+            if (highestBid) {
+              await this.messagesModel.deleteMany({
+                room: room,
+                _id: { $ne: highestBid.id },
+              });
+            }
+            await room.deleteOne();
+          }
+        }
+      }
+
+      await session.commitTransaction();
+    } catch (error) {
+      console.log(error);
+
+      await session.abortTransaction();
+
+      throw new InternalServerErrorException('Error deleting a room.');
+    } finally {
+      session.endSession();
+    }
+  }
+
   async findById(_id: MongooseSchema.Types.ObjectId): Promise<Room> {
     try {
       return this.roomsModel.findOne({ _id });
@@ -92,11 +142,12 @@ export class RoomsRepository {
     }
   }
 
-  async addMessage(content: string, user: User, room: Room) {
+  async addMessage(content: string, user: User, item: Item, room: Room) {
     try {
       let message = new this.messagesModel({
         content,
         user,
+        item,
         room,
       });
 
@@ -109,7 +160,7 @@ export class RoomsRepository {
 
   private formatDateToForm(date: Date) {
     const year = date.getFullYear();
-    const month = date.getMonth() + 1; // Months are zero-based
+    const month = date.getMonth() + 1;
     const day = date.getDate();
 
     return { year, month, day };

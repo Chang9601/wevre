@@ -6,14 +6,18 @@ export class SendMessageDto {
   content: string;
 
   @IsOptional()
-  @IsMongoId()
-  roomId?: MongooseSchema.Types.ObjectId;
+  @IsString()
+  sessionId?: string;
 
   @IsOptional()
   @IsMongoId()
   userId?: MongooseSchema.Types.ObjectId;
 
   @IsOptional()
-  @IsString()
-  sessionId?: string;
+  @IsMongoId()
+  itemId?: MongooseSchema.Types.ObjectId;
+
+  @IsOptional()
+  @IsMongoId()
+  roomId?: MongooseSchema.Types.ObjectId;
 }
