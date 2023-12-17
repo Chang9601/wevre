@@ -50,10 +50,17 @@
   </head>
   <body>
     <h1></h1>
+
+    <div id="bidInfoSection">
+      <div id="bidInfo"></div>
+      <div id="initialBidDisplay"></div>
+    </div>
+
     <pre id="messages"></pre>
     <input type="text" id="messageBox" placeholder="입찰 가격을 입력하세요." />
     <button id="send" title="Send Message">입찰</button>
     <button id="leave" title="Leave Room">나가기</button>
+    <div id="initialBidDisplay"></div>
 
     <script>
       function isNumeric(input) {
@@ -81,6 +88,7 @@
       const queryParams = getQueryParams();
       const itemId = queryParams.itemId;
       const itemName = queryParams.itemName;
+      const initialBid = queryParams.initialBid;
       const startDate = queryParams.startDate;
       const endDate = queryParams.endDate;
 
@@ -88,6 +96,12 @@
         const h1Element = document.querySelector('h1');
         h1Element.innerHTML = `${itemName} 실시간 경매방<br>시작: ${startDate}<br>종료: ${endDate}`;
       }
+
+      const bidInfoSection = document.querySelector('#bidInfoSection');
+
+      const initialBidDisplay = document.createElement('div');
+      initialBidDisplay.innerHTML = `최저 입찰가: <span style="font-weight: bold; color: red;">${initialBid}원</span>`;
+      bidInfoSection.appendChild(initialBidDisplay);
     </script>
 
     <script>
@@ -243,7 +257,9 @@
                 const bid = await getHighestBid(itemId);
                 const price = bid.price;
 
-                if (price >= messageContent) {
+                if (messageContent < initialBid) {
+                  showError('최저 입찰가보다 높은 입찰만 가능합니다!');
+                } else if (price >= messageContent) {
                   showError('최고 입찰가보다 높은 입찰만 가능합니다!');
                 } else {
                   socket.emit('message', {

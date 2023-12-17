@@ -121,10 +121,12 @@
               endDate.getMonth() + 1,
             ).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
 
-            const detailURL = `detail.html?itemName=${encodeURIComponent(
-              item.itemName,
-            )}&itemId=${encodeURIComponent(
+            const detailURL = `detail.html?itemId=${encodeURIComponent(
               item._id,
+            )}&itemName=${encodeURIComponent(
+              item.itemName,
+            )}&initialBid=${encodeURIComponent(
+              item.initialBid,
             )}&startDate=${encodeURIComponent(
               startDateString,
             )}&endDate=${encodeURIComponent(endDateString)}`;
