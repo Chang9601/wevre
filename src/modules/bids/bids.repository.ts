@@ -1,7 +1,9 @@
 import { InjectModel } from '@nestjs/mongoose';
 import {
+  Inject,
   InternalServerErrorException,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { Model, Schema as MongooseSchema } from 'mongoose';
 
@@ -13,6 +15,7 @@ import { Bid } from './interfaces/bid.interface';
 export class BidsRepository {
   constructor(
     private readonly usersResitory: UsersRepository,
+    @Inject(forwardRef(() => RoomsRepository))
     private readonly roomsRepository: RoomsRepository,
     @InjectModel(Message.name) private readonly messagesModel: Model<Message>,
   ) {}

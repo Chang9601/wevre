@@ -1,6 +1,10 @@
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
-import { InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  InternalServerErrorException,
+  forwardRef,
+} from '@nestjs/common';
 import { Schema as MongooseSchema } from 'mongoose';
 import * as moment from 'moment';
 
@@ -8,6 +12,7 @@ import { Room } from '../../entities/room.entity';
 import { Item } from '../../entities/item.entity';
 import { Message } from '../../entities/message.entity';
 import { User } from '../../entities/user.entity';
+import { BidsRepository } from '../bids/bids.repository';
 
 export class RoomsRepository {
   constructor(
@@ -15,6 +20,8 @@ export class RoomsRepository {
     @InjectModel(Message.name) private readonly messagesModel: Model<Message>,
     @InjectModel(Item.name) private readonly itemsModel: Model<Item>,
     @InjectConnection() private readonly connection: Connection,
+    @Inject(forwardRef(() => BidsRepository))
+    private readonly bidsRepository: BidsRepository,
   ) {}
 
   async create() {
@@ -95,10 +102,12 @@ export class RoomsRepository {
           if (room) {
             item.auctionStatus = false;
 
-            const highestBid = await this.messagesModel
-              .findOne({ room: room })
-              .sort({ content: -1 })
-              .collation({ locale: 'en_US', numericOrdering: true });
+            // const highestBid = await this.messagesModel
+            //   .findOne({ room: room })
+            //   .sort({ content: -1 })
+            //   .collation({ locale: 'en_US', numericOrdering: true });
+
+            const highestBid = await this.bidsRepository.findOne(item._id);
 
             await item.save();
             if (highestBid) {

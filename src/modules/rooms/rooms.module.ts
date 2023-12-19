@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { RoomsService } from './rooms.service';
@@ -9,6 +9,7 @@ import { Message, MessageSchema } from '../../entities/message.entity';
 import { UsersModule } from '../users/users.module';
 import { Item, ItemSchema } from '../../entities/item.entity';
 import { RoomsController } from './rooms.controller';
+import { BidsModule } from '../bids/bids.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RoomsController } from './rooms.controller';
     ]),
     UsersModule,
     ItemsModule,
+    forwardRef(() => BidsModule),
   ],
   controllers: [RoomsController],
   providers: [RoomsService, RoomsRepository],

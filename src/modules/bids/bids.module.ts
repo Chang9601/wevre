@@ -1,5 +1,5 @@
 import { MongooseModule } from '@nestjs/mongoose';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { BidsGateway } from './bids.gateway';
 import { UsersModule } from '../users/users.module';
@@ -15,9 +15,10 @@ import { Message, MessageSchema } from '../../entities/message.entity';
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
     UsersModule,
     AuthModule,
-    RoomsModule,
+    forwardRef(() => RoomsModule),
   ],
   controllers: [BidsController],
   providers: [BidsGateway, BidsService, BidsRepository],
+  exports: [BidsRepository],
 })
 export class BidsModule {}
