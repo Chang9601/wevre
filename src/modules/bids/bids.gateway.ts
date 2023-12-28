@@ -63,6 +63,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const user = payload && (await this.usersService.findById(payload.id));
 
       if (sessionId) {
+        client.join(user._id.toString());
         this.connections.set(sessionId, user._id);
       }
 
@@ -161,13 +162,30 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         .fetchSockets();
 
       for (const socket of sockets) {
-        message = `${user.name}(${user.email}): ${sendMessageDto.content}`;
+        message = socket.rooms.has(userId.toString())
+          ? `본인: ${sendMessageDto.content}`
+          : `${user.name}(${user.email}): ${sendMessageDto.content}`;
 
-        if (client.id === socket.id) {
-          client.emit('message');
+        // if (client.id === socket.id) {
+        //   //console.log(`eq: ${socket.id}`);
+
+        //   client.to(userId.toString()).emit('message');
+        // } else {
+        //   //console.log(`nq: ${socket.id}`);
+
+        //   client.to(socket.id).emit('message', message);
+        // }
+
+        //console.log(client.rooms.has);
+        //console.log(userId.toString());
+        if (socket.rooms.has(userId.toString())) {
+          // console.log('TRUE');
+          client.emit('message', message);
         } else {
           client.to(socket.id).emit('message', message);
         }
+
+        //client.to(userId.toString()).to(socket.id).emit('message', message);
       }
 
       await this.roomsSerivce.addMessage(sendMessageDto);
