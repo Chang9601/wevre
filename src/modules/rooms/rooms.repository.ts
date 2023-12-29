@@ -75,7 +75,7 @@ export class RoomsRepository {
     } catch (error) {
       await session.abortTransaction();
 
-      throw new InternalServerErrorException('Error creating a room.');
+      throw new InternalServerErrorException('경매방 생성 중 오류 발생.');
     } finally {
       session.endSession();
     }
@@ -127,7 +127,7 @@ export class RoomsRepository {
 
       await session.abortTransaction();
 
-      throw new InternalServerErrorException('Error deleting a room.');
+      throw new InternalServerErrorException('경매방 삭제 중 오류 발생.');
     } finally {
       session.endSession();
     }
@@ -137,7 +137,9 @@ export class RoomsRepository {
     try {
       return this.roomsModel.findOne({ _id });
     } catch (error) {
-      throw new InternalServerErrorException('Error finding a room by id.');
+      throw new InternalServerErrorException(
+        '아이디로 경매방 검색 중 오류 발생.',
+      );
     }
   }
 
@@ -146,12 +148,12 @@ export class RoomsRepository {
       return this.roomsModel.findOne({ 'item._id': _id }).select('_id');
     } catch (error) {
       throw new InternalServerErrorException(
-        'Error finding a room by item id.',
+        '상품 아이디로 경매방 검색 중 오류 발생.',
       );
     }
   }
 
-  async addMessage(content: string, user: User, item: Item, room: Room) {
+  async sendMessage(content: string, user: User, item: Item, room: Room) {
     try {
       let message = new this.messagesModel({
         content,
@@ -163,7 +165,9 @@ export class RoomsRepository {
       message = await message.save();
       return message._id;
     } catch (error) {
-      throw new InternalServerErrorException('Error adding a message to room.');
+      throw new InternalServerErrorException(
+        '경매방에 메시지 전달 중 오류 발생.',
+      );
     }
   }
 

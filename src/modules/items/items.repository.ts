@@ -74,7 +74,9 @@ export class ItemsRepository {
 
       return { items, page, pages, count };
     } catch (error) {
-      throw new InternalServerErrorException('Error finding a list of items.');
+      throw new InternalServerErrorException(
+        '조건을 만족하는 상품 검색 중 오류 발생.',
+      );
     }
   }
 
@@ -98,7 +100,7 @@ export class ItemsRepository {
       }
 
       if (!item) {
-        throw new NotFoundException('No item with this id found.');
+        throw new NotFoundException('아이디에 해당하는 상품 없음.');
       }
 
       return item;
@@ -106,7 +108,9 @@ export class ItemsRepository {
       if (error instanceof NotFoundException) {
         throw error;
       } else {
-        throw new InternalServerErrorException('Error finding an item by id.');
+        throw new InternalServerErrorException(
+          '아이디로 상품 검색 중 오류 발생.',
+        );
       }
     }
   }

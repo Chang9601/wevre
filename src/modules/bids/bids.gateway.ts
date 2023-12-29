@@ -28,11 +28,13 @@ import { LeaveRoomDto } from 'src/dtos/leave-room.dto';
 import { JoinRoomDto } from 'src/dtos/join-room.dto';
 
 @WebSocketGateway({
+  // 운영 환경에서는 CORS를 비활성화 하지만 개발 환경에서는 호스트는 127.0.0.1 또는 localhost만 CORS 활성화한다.
   cors: {
     origin:
       process.env.NODE_ENV === 'production'
         ? false
         : ['http://127.0.0.1:3000', 'http://localhost:3000'],
+    // 쿠키 사용 시 필요한 속성이다.
     credentials: true,
   },
 })
@@ -63,16 +65,17 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const user = payload && (await this.usersService.findById(payload.id));
 
       if (sessionId) {
+        // 세션이 존재하는 경우 사용자의 아이디 방에 참가한다.
         client.join(user._id.toString());
         this.connections.set(sessionId, user._id);
       }
 
       if (!itemId) {
-        throw new WsException('No item with this id found.');
+        throw new WsException('아이디에 해당하는 상품 없음.');
       }
 
       if (!roomId) {
-        throw new WsException('No room with this id found.');
+        throw new WsException('아이디에 해당하는 경매방 없음');
       }
 
       await this.joinRoom(client, {
@@ -88,6 +91,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     //const cookie = client.handshake.headers.cookie;
     //const { session_id: sessionId } = parse(cookie);
 
+    // 경매방 퇴장 시 세션을 제거할 필요가 있는 지 고민 중
     //this.connections.delete(sessionId);
     client.disconnect(true);
   }
@@ -114,7 +118,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   }
       // }
     } catch (error) {
-      error.message = 'Error joining a room.';
+      error.message = '경매방 참가 중 오류 발생.';
       client.emit('error', error);
       client.disconnect(true);
     }
@@ -129,6 +133,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // const userId = this.connections.get(sessionId);
 
       // const user = await this.usersService.findById(userId);
+      // 연결 종료 시 모든 방 퇴장인데 필요한지 여부 고민 중
       await client.leave(roomId.toString());
 
       // const sockets = await this.server.in(roomId.toString()).fetchSockets();
@@ -142,7 +147,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   }
       // }
     } catch (error) {
-      error.message = 'Error leaving a room.';
+      error.message = '경매방 퇴장 중 오류 발생.';
       client.disconnect(true);
     }
   }
@@ -157,6 +162,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       let message: string;
       sendMessageDto.userId = userId;
+      // 해당 경매방에 존재하는 모든 소켓 인스턴스를 반환한다.
       const sockets = await this.server
         .in(sendMessageDto.roomId.toString())
         .fetchSockets();
@@ -166,32 +172,19 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
           ? `본인: ${sendMessageDto.content}`
           : `${user.name}(${user.email}): ${sendMessageDto.content}`;
 
-        // if (client.id === socket.id) {
-        //   //console.log(`eq: ${socket.id}`);
-
-        //   client.to(userId.toString()).emit('message');
-        // } else {
-        //   //console.log(`nq: ${socket.id}`);
-
-        //   client.to(socket.id).emit('message', message);
-        // }
-
-        //console.log(client.rooms.has);
-        //console.log(userId.toString());
         if (socket.rooms.has(userId.toString())) {
-          // console.log('TRUE');
-          client.emit('message', message);
+          // 브라우저에서 사용자가 여러 개의 탭을 사용하는 경우 전달되는 메시지.
+          socket.emit('message', message);
         } else {
+          // 다른 사용자에게 전달되는 메시지.
           client.to(socket.id).emit('message', message);
         }
-
-        //client.to(userId.toString()).to(socket.id).emit('message', message);
       }
 
-      await this.roomsSerivce.addMessage(sendMessageDto);
+      await this.roomsSerivce.sendMessage(sendMessageDto);
     } catch (error) {
       console.log(error);
-      error.message = 'Error sending a message.';
+      error.message = '메시지 전송 중 오류 발생.';
 
       client.emit('error', error);
       client.disconnect(true);

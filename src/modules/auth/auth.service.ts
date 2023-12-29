@@ -39,10 +39,14 @@ export class AuthService {
         error instanceof BadRequestException ||
         error instanceof NotFoundException
       ) {
-        throw new BadRequestException('Invalid email or password.');
+        throw new BadRequestException(
+          '유효하지 않은 이메일 혹은 유효하지 않은 비밀번호.',
+        );
       }
 
-      throw new InternalServerErrorException('Error comparing passwords.');
+      throw new InternalServerErrorException(
+        '이메일과 비밀번호로 인증 중 오류 발생.',
+      );
     }
   }
 
@@ -58,7 +62,7 @@ export class AuthService {
 
       return { accessToken };
     } catch (error) {
-      throw new InternalServerErrorException('Error creating access token.');
+      throw new InternalServerErrorException('접근 토큰 생성 중 오류 발생.');
     }
   }
 
@@ -74,7 +78,9 @@ export class AuthService {
 
       return { refreshToken };
     } catch (error) {
-      throw new InternalServerErrorException('Error creating refresh token.');
+      throw new InternalServerErrorException(
+        '새로고침 토큰 생성 중 오류 발생.',
+      );
     }
   }
 
@@ -86,7 +92,9 @@ export class AuthService {
 
       return payload;
     } catch (error) {
-      throw new InternalServerErrorException('Error verifying token.');
+      throw new InternalServerErrorException(
+        '접근 토큰으로 인증 중 오류 발생.',
+      );
     }
   }
 }

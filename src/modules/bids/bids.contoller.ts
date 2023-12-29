@@ -12,7 +12,7 @@ import { BidsService } from './bids.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('bids')
-@UseGuards(JwtAuthGuard)
+//@UseGuards(JwtAuthGuard)
 export class BidsController {
   constructor(private readonly bidsService: BidsService) {}
 

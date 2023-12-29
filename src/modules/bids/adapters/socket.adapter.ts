@@ -30,7 +30,7 @@ export class SocketIoAdapter extends IoAdapter {
         (await this.usersService.findById(isTokenVerified.id));
 
       if (!isTokenVerified || !doesUserExist) {
-        return allowFunction('Unauthorized', false);
+        return allowFunction('권한이 없음', false);
       }
 
       return allowFunction(null, true);

@@ -26,9 +26,9 @@ export class UsersRepository {
       return await user.save();
     } catch (error) {
       if (error?.code === MongoDbErrorCode.DUPLICATE_KEY) {
-        throw new ConflictException('User with this email already exists.');
+        throw new ConflictException('이메일 사용 중.');
       }
-      throw new InternalServerErrorException('Error creating a user.');
+      throw new InternalServerErrorException('사용자 생성 중 오류 발생.');
     }
   }
 
@@ -45,7 +45,7 @@ export class UsersRepository {
 
       return updatedUser;
     } catch (error) {
-      throw new InternalServerErrorException('Error updating a user.');
+      throw new InternalServerErrorException('사용자 갱신 중 오류 발생.');
     }
   }
 
@@ -53,7 +53,7 @@ export class UsersRepository {
     try {
       const user = await this.usersModel.findOne({ email });
       if (!user) {
-        throw new NotFoundException('User with this email not found.');
+        throw new NotFoundException('이메일에 해당하는 사용자 없음.');
       }
 
       return user;
@@ -62,7 +62,9 @@ export class UsersRepository {
         throw error;
       }
 
-      throw new InternalServerErrorException('Error finding a user by email.');
+      throw new InternalServerErrorException(
+        '이메일로 사용자 검색 중 오류 발생.',
+      );
     }
   }
 
@@ -70,7 +72,7 @@ export class UsersRepository {
     try {
       const user = await this.usersModel.findOne({ _id });
       if (!user) {
-        throw new NotFoundException('User with this email not found.');
+        throw new NotFoundException('아이디에 해당하는 사용자 없음.');
       }
 
       return user;
@@ -79,7 +81,9 @@ export class UsersRepository {
         throw error;
       }
 
-      throw new InternalServerErrorException('Error finding a user by id.');
+      throw new InternalServerErrorException(
+        '아이디로 사용자 검색 중 오류 발생.',
+      );
     }
   }
 }

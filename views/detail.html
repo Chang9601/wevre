@@ -81,7 +81,11 @@
       function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+
+        if (parts.length === 2) {
+          return parts.pop().split(';').shift();
+        }
+
         return null;
       }
 
@@ -177,6 +181,7 @@
           const h1Element = document.querySelector('h1');
           h1Element.insertAdjacentElement('afterend', centerElement);
         } catch (error) {
+          console.log(error);
           console.error('Bid error:', error.message);
         }
       }
@@ -185,6 +190,9 @@
       const leaveButton = document.querySelector('#leave');
       const messages = document.querySelector('#messages');
       const messageBox = document.querySelector('#messageBox');
+
+      const accessToken = getCookie('access_token');
+      const sessionId = getCookie('session_id');
 
       async function manageSocket(itemId) {
         try {
@@ -195,8 +203,8 @@
           const socket = io(`http://127.0.0.1:3000`, {
             withCredentials: true,
             extraHeaders: {
-              access_token: getCookie('access_token'),
-              session_id: getCookie('session_id'),
+              access_token: accessToken,
+              session_id: sessionId,
             },
             query: {
               item_id: itemId,
@@ -205,7 +213,7 @@
           });
 
           socket.on('connect', () => {
-            console.log('Connected to WebSocket server.');
+            console.log('웹소켓 연결 완료.');
           });
 
           socket.on('join', (data) => {
@@ -218,11 +226,12 @@
 
           socket.on('message', async (data) => {
             showMessage(data);
+            console.log(data);
             await showBidStatus();
           });
 
           socket.on('disconnect', () => {
-            console.log('Disconnected from WebSocket server.');
+            console.log('웹소켓 연결 해제');
           });
 
           socket.on('error', (error) => {
@@ -259,17 +268,20 @@
 
                 if (messageContent < initialBid) {
                   showError('최저 입찰가보다 높은 입찰만 가능합니다!');
-                } else if (price >= messageContent) {
-                  showError('최고 입찰가보다 높은 입찰만 가능합니다!');
-                } else {
-                  socket.emit('message', {
-                    content: messageContent,
-                    sessionId: getCookie('session_id'),
-                    itemId: itemId,
-                    roomId: roomId,
-                  });
-                  //showMessage(`본인: ${messageBox.value}`);
+                  return;
                 }
+
+                if (price >= messageContent) {
+                  showError('최고 입찰가보다 높은 입찰만 가능합니다!');
+                  return;
+                }
+
+                socket.emit('message', {
+                  content: messageContent,
+                  sessionId: sessionId,
+                  itemId: itemId,
+                  roomId: roomId,
+                });
               } else {
                 showError('숫자만 입력할 수 있습니다!');
               }
@@ -292,7 +304,9 @@
       }
 
       showBidStatus();
-      manageSocket(itemId);
+      if (accessToken && sessionId) {
+        manageSocket(itemId);
+      }
     </script>
   </body>
 </html>

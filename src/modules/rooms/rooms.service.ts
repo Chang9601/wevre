@@ -42,14 +42,14 @@ export class RoomsService {
     return await this.roomsRepository.findByItemId(id);
   }
 
-  async addMessage(sendMessageDto: SendMessageDto) {
+  async sendMessage(sendMessageDto: SendMessageDto) {
     const { content, userId, itemId, roomId } = sendMessageDto;
 
     const user = await this.usersRepository.findById(userId);
     const item = await this.itemsRepository.findOne(itemId);
     const room = await this.findById(roomId);
 
-    const messageId = await this.roomsRepository.addMessage(
+    const messageId = await this.roomsRepository.sendMessage(
       content,
       user,
       item,

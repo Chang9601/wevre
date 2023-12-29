@@ -20,7 +20,7 @@ export class UsersService {
 
       return this.usersRepository.create(name, email, hashedPassword);
     } catch (error) {
-      throw new InternalServerErrorException('Error hashing password.');
+      throw new InternalServerErrorException('비밀번호 해시 중 오류 발생.');
     }
   }
 
@@ -31,7 +31,7 @@ export class UsersService {
     try {
       return this.usersRepository.update(id, updateUserDto);
     } catch (error) {
-      throw new InternalServerErrorException('Error updating user.');
+      throw new InternalServerErrorException('사용자 갱신 중 오류 발생.');
     }
   }
 
@@ -47,7 +47,9 @@ export class UsersService {
         refreshToken: hashedRefreshToken,
       });
     } catch (error) {
-      throw new InternalServerErrorException('Error setting refresh token.');
+      throw new InternalServerErrorException(
+        '새로고침 토큰 설정 중 오류 발생.',
+      );
     }
   }
 
@@ -55,7 +57,9 @@ export class UsersService {
     try {
       await this.usersRepository.update(id, { refreshToken: null });
     } catch (error) {
-      throw new InternalServerErrorException('Error removing refresh token.');
+      throw new InternalServerErrorException(
+        '새로고침 토큰 삭제 중 오류 발생.',
+      );
     }
   }
 
@@ -72,7 +76,7 @@ export class UsersService {
       );
 
       if (!refreshTokenMatch) {
-        throw new NotFoundException('Refresh tokens do not match.');
+        throw new NotFoundException('새로고침 토큰 불일치.');
       }
 
       return user;
@@ -81,7 +85,9 @@ export class UsersService {
         throw error;
       }
 
-      throw new InternalServerErrorException('Error comparing refresh token.');
+      throw new InternalServerErrorException(
+        '새로고침 토큰으로 사용자 검색 중 오류 발생.',
+      );
     }
   }
 
