@@ -34,10 +34,12 @@ import { JoinRoomDto } from 'src/dtos/join-room.dto';
       process.env.NODE_ENV === 'production'
         ? false
         : ['http://127.0.0.1:3000', 'http://localhost:3000'],
-    // 쿠키 사용 시 필요한 속성이다.
+    // 쿠키 사용 시 필요한 속성.
     credentials: true,
   },
 })
+// 웹소켓 예외 필터는 작동하나 코드 수정이 필요하다.
+// 웹소켓 가드 필터는 확인이 필요하다.
 @UseFilters(WebsocketExceptionFilter)
 @UseGuards(WsJwtAuthGuard)
 export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -87,7 +89,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     //const cookie = client.handshake.headers.cookie;
     //const { session_id: sessionId } = parse(cookie);
 
@@ -118,7 +120,8 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       //   }
       // }
     } catch (error) {
-      error.message = '경매방 참가 중 오류 발생.';
+      error.message = '경매방 입장 중 오류 발생.';
+
       client.emit('error', error);
       client.disconnect(true);
     }
@@ -148,6 +151,8 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // }
     } catch (error) {
       error.message = '경매방 퇴장 중 오류 발생.';
+
+      client.emit('error', error);
       client.disconnect(true);
     }
   }
@@ -169,8 +174,8 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       for (const socket of sockets) {
         message = socket.rooms.has(userId.toString())
-          ? `본인: ${sendMessageDto.content}`
-          : `${user.name}(${user.email}): ${sendMessageDto.content}`;
+          ? `본인: ${sendMessageDto.content}원`
+          : `${user.name}(${user.email}): ${sendMessageDto.content}원`;
 
         if (socket.rooms.has(userId.toString())) {
           // 브라우저에서 사용자가 여러 개의 탭을 사용하는 경우 전달되는 메시지.
@@ -183,8 +188,7 @@ export class BidsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       await this.roomsSerivce.sendMessage(sendMessageDto);
     } catch (error) {
-      console.log(error);
-      error.message = '메시지 전송 중 오류 발생.';
+      error.message = '입찰 중 오류 발생.';
 
       client.emit('error', error);
       client.disconnect(true);

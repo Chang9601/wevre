@@ -82,21 +82,16 @@
         return null;
       }
 
-      const accessToken = getCookie('access_token');
-      const sessionId = getCookie('session_id');
+      const socket = io(`http://127.0.0.1:3000`, {
+        withCredentials: true,
+        extraHeaders: {
+          access_token: getCookie('access_token'),
+          session_id: getCookie('session_id'),
+        },
+      });
 
-      if (accessToken) {
-        const socket = io(`http://127.0.0.1:3000`, {
-          withCredentials: true,
-          extraHeaders: {
-            access_token: accessToken,
-            session_id: sessionId,
-          },
-        });
-
-        socket.connect();
-        socket.disconnect();
-      }
+      socket.connect();
+      socket.disconnect();
 
       let currentPage = 1;
       let itemsPerPage = 10;

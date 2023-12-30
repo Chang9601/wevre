@@ -19,7 +19,7 @@ export class AllExceptionFilter implements ExceptionFilter {
     const response = context.getResponse();
 
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error.';
+    let message = '서버 오류 발생.';
     const timestamp = new Date().toISOString();
     const path = httpAdapter.getRequestUrl(request);
 

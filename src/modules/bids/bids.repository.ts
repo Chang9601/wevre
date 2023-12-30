@@ -25,7 +25,7 @@ export class BidsRepository {
       const room = await this.roomsRepository.findByItemId(id);
 
       if (!room) {
-        throw new NotFoundException('No room with this id found.');
+        throw new NotFoundException('아이디에 해당하는 경매방 없음.');
       }
 
       const bid = await this.messagesModel
@@ -56,7 +56,7 @@ export class BidsRepository {
         throw error;
       }
 
-      throw new InternalServerErrorException('Error finding the highest bid.');
+      throw new InternalServerErrorException('최고 입찰가 검색 중 오류 발생.');
     }
   }
 }

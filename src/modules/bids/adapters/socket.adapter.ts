@@ -21,6 +21,11 @@ export class SocketIoAdapter extends IoAdapter {
     options.allowRequest = async (request, allowFunction) => {
       const cookie = request.headers.cookie;
 
+      // 쿠키에 토큰이 존재하지 않을 경우 accessToken 자체의 값이 없어서 서버가 다운되는 것을 방지한다.
+      if (!cookie) {
+        return allowFunction('권한 없음', false);
+      }
+
       const { access_token: accessToken } = parse(cookie);
 
       const isTokenVerified =
@@ -30,7 +35,7 @@ export class SocketIoAdapter extends IoAdapter {
         (await this.usersService.findById(isTokenVerified.id));
 
       if (!isTokenVerified || !doesUserExist) {
-        return allowFunction('권한이 없음', false);
+        return allowFunction('권한 없음', false);
       }
 
       return allowFunction(null, true);
