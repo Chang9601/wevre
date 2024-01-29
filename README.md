@@ -26,7 +26,20 @@ https://whooa27.blogspot.com/search/label/wevre
 ### 회원가입, 로그인 및 개인정보
 [Screencast from 2024년 01월 29일 09시 36분 36초.webm](https://github.com/Chang9601/wevre/assets/79137839/fa34822e-0820-497e-84d4-a584640714af)
 
-### 상품 목록
-[Screencast from 2024년 01월 29일 09시 38분 53초.webm](https://github.com/Chang9601/wevre/assets/79137839/109a031d-cbe8-469f-8c86-d7bc1f7268d0)
+### 작품 목록, 작품 상세 및 경매방
+[Screencast from 2024년 01월 29일 17시 28분 16초.webm](https://github.com/Chang9601/wevre/assets/79137839/d8b12442-96e5-4800-a71c-ec06e4cd53f9)
 
-### 경매방 입장, 경매방 퇴장 및 입찰
+### 입찰:2개의 경매방(각각 2명)
+[Screencast from 2024년 01월 29일 11시 58분 34초.webm](https://github.com/Chang9601/wevre/assets/79137839/171a326c-4443-4ebe-a632-72317bb8cb2b)
+
+### 1개의 경매방(4명)
+[Screencast from 2024년 01월 29일 12시 00분 18초.webm](https://github.com/Chang9601/wevre/assets/79137839/d87c9165-e36c-438e-9bce-67f2a044586d)
+
+### 낙찰
+[Screencast from 2024년 01월 29일 17시 12분 35초.webm](https://github.com/Chang9601/wevre/assets/79137839/8ec9577d-0c94-4c10-a319-9e2e624826bc)
+
+### 주문 및 주문 목록
+[Screencast from 2024년 01월 29일 17시 15분 11초.webm](https://github.com/Chang9601/wevre/assets/79137839/fa0530be-637b-40dc-ba90-43c489dc5ff3)
+
+### 로그아웃
+[Screencast from 2024년 01월 29일 17시 30분 24초.webm](https://github.com/Chang9601/wevre/assets/79137839/e502688e-1a6e-466f-b189-0cbd02aeeff9)
