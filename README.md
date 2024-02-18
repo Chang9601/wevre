@@ -1,13 +1,13 @@
 # Wevre
 
 ## 소개
-WebSocket 프로토콜을 사용하여 실시간 경매방을 구현한 위코드 2차 프로젝트 Wevre를 HTTP 폴링을 포함한 SocketIO 라이브러리로 리팩토링하고 있습니다.
-개발 시 SocketIO 라이브러리의 HTTP 폴링으로 실시간 경매방을 구현했으며 배포 시 스케일 아웃을 염두해 스티키 세션과 어탭터를 구현하고 있습니다.
-또한 관계형 데이터베이스인 MySQL을 사용한 Wevre와 달리 리팩토링에서는 NoSQL 데이터베이스 MongoDB를 사용해서 NoSQL 데이터베이스의 특징과 쿼리를 체득하고 있습니다.
+- WebSocket 프로토콜을 사용하여 실시간 경매방을 구현한 위코드 2차 프로젝트 Wevre를 HTTP 폴링을 포함한 SocketIO 라이브러리로 리팩토링하고 있습니다.
+- 개발 시 SocketIO 라이브러리의 HTTP 폴링으로 실시간 경매방을 구현했으며 배포 시 스케일 아웃을 염두해 스티키 세션과 어탭터를 구현하고 있습니다.
+- 또한 관계형 데이터베이스인 MySQL을 사용한 Wevre와 달리 리팩토링에서는 NoSQL 데이터베이스 MongoDB를 사용해서 NoSQL 데이터베이스의 특징과 쿼리를 체득하고 있습니다.
 
 ## 실행
 main 브랜치의 docker-compose.yml 파일을 docker compose up --build 명령으로 실행.
--  애플리케이션: http://localhost:3000
+-  애플리케이션: http://localhost:3000, http://localhost:3001
 -  Redis 웹 인터페이스: http://localhost:8081
 -  MongoDB 웹 인터페이스: http://localhost:8082
 
@@ -32,8 +32,11 @@ https://whooa27.blogspot.com/search/label/wevre
 ### 입찰:2개의 경매방(각각 2명)
 [Screencast from 2024년 01월 29일 11시 58분 34초.webm](https://github.com/Chang9601/wevre/assets/79137839/171a326c-4443-4ebe-a632-72317bb8cb2b)
 
-### 1개의 경매방(4명)
+### 입찰: 1개의 경매방(4명)
 [Screencast from 2024년 01월 29일 12시 00분 18초.webm](https://github.com/Chang9601/wevre/assets/79137839/d87c9165-e36c-438e-9bce-67f2a044586d)
+
+### Redis 어댑터(SocketIO 서버 스케일 아웃)
+[Screencast from 2024년 02월 18일 22시 43분 20초.webm](https://github.com/Chang9601/wevre/assets/79137839/aa22715c-dd7f-4c7f-a6c0-cb93119f9e91)
 
 ### 낙찰
 [Screencast from 2024년 01월 29일 17시 12분 35초.webm](https://github.com/Chang9601/wevre/assets/79137839/8ec9577d-0c94-4c10-a319-9e2e624826bc)
