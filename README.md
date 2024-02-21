@@ -12,6 +12,10 @@ main 브랜치의 docker-compose.yml 파일을 docker compose up --build 명령�
 -  Redis 웹 인터페이스: http://localhost:8081
 -  MongoDB 웹 인터페이스: http://localhost:8082
 
+## 테스트
+- 단위 테스트: 애플리케이션 실행 후 docker compose exec app1/app2 npm run test 명령 실행.
+- E2E 테스트: main 브랜치의 docker-compose.ci.yml 파일을 docker compose -f docker-compose.ci.yml up --build 명령으로 실행.
+
 ## 기술 스택
 |개발|
 | :----: |
