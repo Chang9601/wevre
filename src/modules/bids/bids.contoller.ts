@@ -11,12 +11,15 @@ import {
 import { Schema as MongooseSchema } from 'mongoose';
 import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
-import { PaginationDto } from '../../dtos/pagination.dto';
 import { BidsDto } from '../../dtos/bids.dto';
+import { PaginationDto } from '../../dtos/pagination.dto';
+import { PageDto } from '../../dtos/page.dto';
+import { Bid } from '../../entities/bid.entity';
 import { BidsService } from './bids.service';
 import { ParseObjectIdPipe } from '../../pipes/parse-object-id.pipe';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
+import { IBid } from '../../interfaces/types.interface';
 import { Serialize } from '../../interceptors/serialize.interceptor';
 
 @ApiTags('bids')
@@ -33,9 +36,9 @@ export class BidsController {
   @HttpCode(HttpStatus.OK)
   @Get('/:id')
   async getHighestBid(
-    @Param('id', ParseObjectIdPipe) id: MongooseSchema.Types.ObjectId,
-  ) {
-    return await this.bidsService.findOne(id);
+    @Param('id', ParseObjectIdPipe) _id: MongooseSchema.Types.ObjectId,
+  ): Promise<IBid> {
+    return await this.bidsService.findHighestOne(_id);
   }
 
   @ApiNotFoundResponse({
@@ -52,7 +55,7 @@ export class BidsController {
   async getBids(
     @Req() request: RequestWithUser,
     @Query() paginationDto: PaginationDto,
-  ) {
+  ): Promise<PageDto<Bid>> {
     const { user } = request;
 
     return await this.bidsService.find(paginationDto, user);

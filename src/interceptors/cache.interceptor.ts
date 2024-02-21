@@ -1,5 +1,5 @@
-import { CACHE_KEY_METADATA, CacheInterceptor } from '@nestjs/cache-manager';
 import { ExecutionContext, Injectable } from '@nestjs/common';
+import { CACHE_KEY_METADATA, CacheInterceptor } from '@nestjs/cache-manager';
 
 import { createCacheKey } from '../common/factories/common.factory';
 

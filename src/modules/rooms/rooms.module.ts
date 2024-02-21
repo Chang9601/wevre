@@ -1,27 +1,20 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { RoomsService } from './rooms.service';
 import { Room, RoomSchema } from '../../entities/room.entity';
-import { RoomsRepository } from './rooms.repository';
-import { Bid, BidSchema } from '../../entities/bid.entity';
-import { Item, ItemSchema } from '../../entities/item.entity';
-import { RoomsController } from './rooms.controller';
 import { BidsModule } from '../bids/bids.module';
 import { ItemsModule } from '../items/items.module';
+import { RoomsController } from './rooms.controller';
+import { RoomsService } from './rooms.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Room.name, schema: RoomSchema },
-      { name: Bid.name, schema: BidSchema },
-      { name: Item.name, schema: ItemSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Room.name, schema: RoomSchema }]),
     ItemsModule,
     forwardRef(() => BidsModule),
   ],
   controllers: [RoomsController],
-  providers: [RoomsService, RoomsRepository],
-  exports: [RoomsService, RoomsRepository],
+  providers: [RoomsService],
+  exports: [RoomsService],
 })
 export class RoomsModule {}

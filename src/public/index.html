@@ -60,11 +60,11 @@
         <li id="bids-link"><a href="bids.html">입찰 목록</a></li>
         <li id="orders-link"><a href="orders.html">주문 목록</a></li>
         <li id="me-link"><a href="me.html">개인정보</a></li>
-        <li id="signin-link"><a href="signin.html">로그인</a></li>
+        <li id="signin-link"><a href="/signin">로그인</a></li>
         <li id="signout-link" style="display: none">
           <a href="#" id="signout">로그아웃</a>
         </li>
-        <li id="signup-link"><a href="signup.html">회원가입</a></li>
+        <li id="signup-link"><a href="/signup">회원가입</a></li>
       </ul>
 
       <p id="status-message"></p>
@@ -74,13 +74,6 @@
 
     <script>
       const statusMessage = document.getElementById('status-message');
-
-      async function isAuthenticated() {
-        const response = await fetch('/auth/whoami');
-        const status = response.status;
-
-        return status === 200 ? true : false;
-      }
 
       async function updateLinksVisibility() {
         const authenticated = await isAuthenticated();

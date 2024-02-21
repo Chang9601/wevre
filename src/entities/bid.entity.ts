@@ -12,10 +12,10 @@ export class Bid extends Document {
   price: number;
 
   @Prop({ default: Date.now })
-  updatedAt: Date;
+  createdAt: Date;
 
   @Prop({ default: Date.now })
-  createdAt: Date;
+  updatedAt: Date;
 
   // 다대일(N:1, 입찰:사용자) 관계.
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })

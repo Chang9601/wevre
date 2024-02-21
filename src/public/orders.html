@@ -94,13 +94,6 @@
         return /^[1-9][0-9]*$/.test(input);
       }
 
-      async function isAuthenticated() {
-        const response = await fetch('/auth/whoami');
-        const status = response.status;
-
-        return status === 200 ? true : false;
-      }
-
       function getQueryParams() {
         const queryParams = {};
         const queryString = window.location.search.slice(1);
@@ -167,6 +160,7 @@
 
           orders.forEach(async (order) => {
             const {
+              id,
               totalPrice,
               totalQuantity,
               streetAddress,
@@ -189,25 +183,6 @@
         <p>상세 주소: ${address}</p>
         <p>우편번호: ${zipcode}</p>
       `;
-            const button = document.createElement('button');
-            let url;
-
-            button.textContent = '경매방';
-            button.addEventListener('click', async () => {
-              url = `detail.html?itemId=${encodeURIComponent(
-                itemId,
-              )}&itemName=${encodeURIComponent(
-                itemName,
-              )}&initialorder=${encodeURIComponent(
-                initialorder,
-              )}&startDate=${encodeURIComponent(
-                startDate,
-              )}&endDate=${encodeURIComponent(endDate)}`;
-
-              window.location.href = url;
-            });
-
-            listOrder.appendChild(button);
 
             orderContainer.appendChild(listOrder);
             orderList.appendChild(orderContainer);
@@ -230,7 +205,7 @@
           if (message === '401') {
             statusMessage.textContent = '로그인 필요';
           } else if (message === '404') {
-            statusMessage.textContent = '빈 주문';
+            statusMessage.textContent = '주문 내역 없음';
             document.getElementById('order-link').style.display = 'none';
           } else if (message === '500') {
             statusMessage.textContent = '오류 발생';

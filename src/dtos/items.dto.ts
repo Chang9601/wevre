@@ -1,9 +1,9 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import * as moment from 'moment';
 
 import { PageStateDto } from './page-state.dto';
 import { Item } from '../entities/item.entity';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class ItemsDto {
   @ApiProperty({
@@ -35,7 +35,7 @@ export class ItemsDto {
       {
         itemId: '64e8931bb743b0ae0d83c934',
         itemName: '숲',
-        auctionStatus: true,
+        auctionStatus: false,
         initialBid: 1352000,
         startDate: '2024-02-05',
         endDate: '2024-03-15',

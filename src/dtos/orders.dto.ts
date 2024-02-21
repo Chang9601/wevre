@@ -1,6 +1,6 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import * as moment from 'moment';
-import { ApiProperty } from '@nestjs/swagger';
 
 import { PageStateDto } from './page-state.dto';
 import { Order } from '../entities/order.entity';

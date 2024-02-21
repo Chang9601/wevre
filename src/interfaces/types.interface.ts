@@ -19,3 +19,11 @@ export interface IItems {
   items: Item[];
   total: number;
 }
+
+export interface IJwtToken {
+  token: string;
+}
+
+export interface IMessage {
+  message: string;
+}

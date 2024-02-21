@@ -48,10 +48,10 @@ export class Item extends Document {
   auctionStatus: boolean;
 
   @Prop({ default: Date.now })
-  updatedAt: Date;
+  createdAt: Date;
 
   @Prop({ default: Date.now })
-  createdAt: Date;
+  updatedAt: Date;
 
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
   @Type(() => User)

@@ -1,8 +1,8 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsMongoId, IsOptional, IsString } from 'class-validator';
 import { Schema as MongooseSchema } from 'mongoose';
 
 import { ValidationError } from '../common/enums/common.enum';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class MakeBidDto {
   @ApiProperty({

@@ -8,7 +8,6 @@ import { ItemsModule } from '../items/items.module';
 import { BidsController } from './bids.contoller';
 import { BidsGateway } from './bids.gateway';
 import { BidsService } from './bids.service';
-import { BidsRepository } from './bids.repository';
 import { Bid, BidSchema } from '../../entities/bid.entity';
 
 @Module({
@@ -21,7 +20,7 @@ import { Bid, BidSchema } from '../../entities/bid.entity';
     forwardRef(() => RoomsModule),
   ],
   controllers: [BidsController],
-  providers: [BidsGateway, BidsService, BidsRepository],
-  exports: [BidsRepository],
+  providers: [BidsGateway, BidsService],
+  exports: [BidsService],
 })
 export class BidsModule {}

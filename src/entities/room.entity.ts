@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 import { Type } from 'class-transformer';
 
 import { Item, ItemSchema } from './item.entity';
 
 @Schema()
 export class Room extends Document {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   name: string;
 
   @Prop({ required: true })
@@ -19,15 +19,15 @@ export class Room extends Document {
   endDate: Date;
 
   @Prop({ default: Date.now })
-  updatedAt: Date;
+  createdAt: Date;
 
   @Prop({ default: Date.now })
-  createdAt: Date;
+  updatedAt: Date;
 
   // 일대일(1:1) 관계.
   // 다대일, 일대다, 다대다와 달리 ref 속성을 사용하지 않는다.
   // 즉, 관계를 사용하지 않고 Item 문서를 Room 문서에 중첩한다.
-  @Prop({ type: ItemSchema })
+  @Prop({ type: ItemSchema as MongooseSchema<Item> })
   @Type(() => Item)
   item: Item;
 }

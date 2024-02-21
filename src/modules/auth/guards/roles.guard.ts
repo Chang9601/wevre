@@ -37,6 +37,6 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    throw new ForbiddenException('권한 없음.');
+    throw new ForbiddenException('역할 없음.');
   }
 }

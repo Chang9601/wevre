@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>작품 상세</title>
+    <title>경매방</title>
     <script
       src="https://cdn.socket.io/4.6.0/socket.io.min.js"
       integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
@@ -56,6 +56,8 @@
       <div id="initial-bid-display"></div>
     </div>
 
+    <p id="status-message"></p>
+
     <pre id="bids"></pre>
     <input type="text" id="bid-box" placeholder="입찰 가격 입력" />
     <button id="send" title="send">입찰</button>
@@ -65,8 +67,15 @@
     <script src="./common.js"></script>
 
     <script>
+      const statusMessage = document.getElementById('status-message');
+      let _initialBid;
+
       function isNumeric(input) {
         return /^[1-9][0-9]*$/.test(input);
+      }
+
+      function formatDate(date) {
+        return date.split('T')[0];
       }
 
       function getQueryParams() {
@@ -91,25 +100,53 @@
         return null;
       }
 
-      const queryParams = getQueryParams();
-      const itemId = queryParams.itemId;
-      const itemName = queryParams.itemName;
-      const initialBid = queryParams.initialBid;
-      const startDate = queryParams.startDate;
-      const endDate = queryParams.endDate;
-      const offset = queryParams.offset;
-      const limit = queryParams.limit;
+      async function fetchItem(itemId) {
+        try {
+          const response = await fetch(`/items/${itemId}`);
+          const status = response.status;
 
-      if (itemName) {
-        const h1Element = document.querySelector('h1');
-        h1Element.innerHTML = `${itemName} 실시간 경매방<br>시작: ${startDate}<br>종료: ${endDate}`;
+          if (status === 404) {
+            throw new Error(404);
+          } else if (status === 500) {
+            throw new Error(500);
+          }
+
+          const item = await response.json();
+
+          const { itemName, startDate, endDate, initialBid } = item;
+
+          const formattedStartDate = formatDate(startDate);
+          const formattedEndDate = formatDate(endDate);
+          _initialBid = initialBid;
+
+          if (itemName) {
+            const h1Element = document.querySelector('h1');
+            h1Element.innerHTML = `${itemName} 실시간 경매방<br>시작: ${formattedStartDate}<br>종료: ${formattedEndDate}`;
+          }
+
+          const bidInfoSection = document.querySelector('#bid-info-section');
+
+          const initialBidDisplay = document.createElement('div');
+          initialBidDisplay.innerHTML = `최저 입찰가: <span style="font-weight: bold; color: red;">${initialBid}원</span>`;
+          bidInfoSection.appendChild(initialBidDisplay);
+        } catch (error) {
+          console.log(error);
+          const { message } = error;
+
+          if (message === '404') {
+            window.location.href = 'dne.html';
+          } else if (message === '500') {
+            statusMessage.textContent = '오류 발생';
+          } else {
+            statusMessage.textContent = '네트워크 오류 발생';
+          }
+        }
       }
 
-      const bidInfoSection = document.querySelector('#bid-info-section');
+      const queryParams = getQueryParams();
+      const { itemId, offset, limit } = queryParams;
 
-      const initialBidDisplay = document.createElement('div');
-      initialBidDisplay.innerHTML = `최저 입찰가: <span style="font-weight: bold; color: red;">${initialBid}원</span>`;
-      bidInfoSection.appendChild(initialBidDisplay);
+      fetchItem(itemId);
     </script>
 
     <script>
@@ -154,7 +191,7 @@
           const bid = await getHighestBid(itemId);
 
           if (bid.hasOwnProperty('statusCode')) {
-            throw new Error('상품에 해당하는 경매방 없음');
+            throw new Error('존재하지 않는 경매방');
           }
 
           const price = bid.price;
@@ -185,7 +222,7 @@
           const h1Element = document.querySelector('h1');
           h1Element.insertAdjacentElement('afterend', centerElement);
         } catch (error) {
-          showError('경매방 없음');
+          window.location.href = 'dne.html';
         }
       }
 
@@ -196,18 +233,18 @@
 
       const accessToken = getCookie('access_token');
       const socketSessionId = getCookie('socket_session_id');
-      let isConnected = false;
       let _roomId;
       let _socket;
+      let connected = false;
 
       sendButton.onclick = async function () {
-        if (isConnected) {
+        if (connected) {
           const bid = bidBox.value.trim();
 
           if (isNumeric(bid)) {
             const highestBid = await getHighestBid(itemId);
 
-            if (bid < initialBid) {
+            if (bid < _initialBid) {
               showError('최저 입찰가보다 높은 입찰만 가능');
               return;
             }
@@ -228,11 +265,18 @@
           }
         } else {
           showError('실시간 연결 안됨');
+
+          const redirectToSigninPage = confirm('로그인 페이지로 이동?');
+          if (redirectToSigninPage) {
+            window.location.href = '/signin';
+          }
         }
       };
 
       leaveButton.onclick = function () {
-        if (isConnected) {
+        // 기본적으로 소켓이 연결되지 않은 상태에서 발생한 이벤트는 다시 연결될 때까지 버퍼링된다.
+        // 이는 대부분의 경우에는 유용하지만(재연결 지연이 짧을 때), 연결이 복원될 때 이벤트의 대량 증가를 초래할 수 있다.
+        if (connected) {
           _socket.emit('leave', { _roomId });
         }
 
@@ -267,7 +311,10 @@
 
           socket.on('connect', () => {
             console.log('웹소켓 연결 완료');
-            isConnected = true;
+          });
+
+          socket.on('disconnect', () => {
+            console.log('웹소켓 연결 해제');
           });
 
           socket.on('join', (data) => {
@@ -284,31 +331,27 @@
             await showBidStatus();
           });
 
-          socket.on('disconnect', () => {
-            console.log('웹소켓 연결 해제');
-          });
-
           socket.on('error', (error) => {
             if (error && error.message) {
               if (error.message.startsWith('경매방')) {
-                showError('경매방 없음');
+                window.location.href = 'dne.html';
               } else if (error.message.startsWith('상품')) {
-                showError('존재하지 않는 상품');
+                window.location.href = 'dne.html';
               } else if (error.message.startsWith('입장')) {
-                showError('경매방 입장 중 오류가 발생');
+                showError('경매방 입장 중 오류 발생');
               } else if (error.message.startsWith('퇴장')) {
-                showError('경매방 퇴장 중 오류가 발생');
+                showError('경매방 퇴장 중 오류 발생');
               } else if (error.message.startsWith('입찰')) {
-                showError('입찰 중 오류가 발생');
+                showError('입찰 중 오류 발생');
               } else {
-                showError('오류가 발생');
+                showError('오류 발생');
               }
             }
           });
 
           return socket;
         } catch (error) {
-          showError('경매방 없음');
+          window.location.href = 'dne.html';
         }
       }
 
@@ -317,6 +360,7 @@
         if (socketSessionId) {
           const socket = await manageSocket(itemId);
           _socket = socket;
+          connected = true; //socket.connected;
         } else {
           showError('로그인 필요');
         }

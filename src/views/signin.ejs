@@ -63,6 +63,38 @@
         background-color: #0056b3;
       }
 
+      button#naver-login-button {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 250px;
+        padding: 8px;
+        border-radius: 4px;
+      }
+
+      button#naver-login-button:hover {
+        background-color: #0056b3;
+      }
+
+      button#google-login-button {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 250px;
+        padding: 8px;
+        border-radius: 4px;
+      }
+
+      button#google-login-button:hover {
+        background-color: #0056b3;
+      }
+
       #status-message {
         text-align: center;
         color: red;
@@ -80,13 +112,44 @@
         <label for="password">비밀번호</label>
         <input type="password" id="password" name="password" required />
 
+        <input
+          type="hidden"
+          id="naver-client-id"
+          value="<%= naverClientId %>"
+        />
+        <input
+          type="hidden"
+          id="naver-callback-uri"
+          value="<%= naverCallbackUri %>"
+        />
+
+        <input
+          type="hidden"
+          id="google-client-id"
+          value="<%= googleClientId %>"
+        />
+        <input
+          type="hidden"
+          id="google-callback-uri"
+          value="<%= googleCallbackUri %>"
+        />
+
         <input type="submit" value="로그인" />
+
+        <button type="button" id="naver-login-button" class="signup-button">
+          네이버 로그인
+        </button>
+
+        <button type="button" id="google-login-button" class="signup-button">
+          구글 로그인
+        </button>
       </form>
 
       <p id="status-message"></p>
 
       <div class="back-link">
         <a href="#" onclick="goHome()">홈으로</a>
+        <a href="#" id="signup-link" onclick="goSignUp()">회원가입</a>
       </div>
     </div>
 
@@ -95,6 +158,10 @@
     <script>
       function goHome() {
         window.location.href = 'index.html';
+      }
+
+      function goSignUp() {
+        window.location.href = '/signup';
       }
 
       document
@@ -136,6 +203,34 @@
               statusMessage.textContent = '네트워크 오류 발생';
             }
           }
+        });
+
+      document
+        .getElementById('naver-login-button')
+        .addEventListener('click', function () {
+          const naverClientId =
+            document.getElementById('naver-client-id').value;
+          const naverCallbackUri =
+            document.getElementById('naver-callback-uri').value;
+
+          const parameters = `response_type=code&client_id=${naverClientId}&state=state&redirect_uri=${naverCallbackUri}`;
+          const uri = `https://nid.naver.com/oauth2.0/authorize?${parameters}`;
+          window.location.href = uri;
+        });
+
+      document
+        .getElementById('google-login-button')
+        .addEventListener('click', function () {
+          const googleClientId =
+            document.getElementById('google-client-id').value;
+          const googleCallbackUri = document.getElementById(
+            'google-callback-uri',
+          ).value;
+
+          const scope = `scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile`;
+          const parameters = `${scope}&access_type=offline&response_type=code&redirect_uri=${googleCallbackUri}&client_id=${googleClientId}`;
+          const uri = `https://accounts.google.com/o/oauth2/v2/auth?${parameters}`;
+          window.location.href = uri;
         });
     </script>
   </body>

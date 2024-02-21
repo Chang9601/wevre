@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 
 import { Room } from './room.entity';
-import { Role } from '../common/enums/common.enum';
+import { OAuthProvider, Role } from '../common/enums/common.enum';
 
 @Schema()
 export class User extends Document {
@@ -25,11 +25,20 @@ export class User extends Document {
   @Prop({ required: false })
   refreshToken: string;
 
-  @Prop({ default: Date.now })
-  updatedAt: Date;
+  @Prop({ required: false, default: OAuthProvider.NONE })
+  oAuthProvider: string;
+
+  @Prop({ required: false, default: null })
+  oAuthProviderId: string;
+
+  @Prop({ required: false, default: null })
+  oAuthProviderRefreshToken: string;
 
   @Prop({ default: Date.now })
   createdAt: Date;
+
+  @Prop({ default: Date.now })
+  updatedAt: Date;
 
   @Prop({ default: [Role.USER] })
   roles: Role[];

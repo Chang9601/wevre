@@ -106,17 +106,6 @@
         return null;
       }
 
-      const socket = io(`/`, {
-        withCredentials: true,
-        extraHeaders: {
-          access_token: getCookie('access_token'),
-          socket_session_id: getCookie('socket_session_id'),
-        },
-      });
-
-      socket.connect();
-      socket.disconnect();
-
       function getQueryParams() {
         const queryParams = {};
         const queryString = window.location.search.slice(1);
@@ -157,31 +146,55 @@
           itemList.innerHTML = '';
 
           items.forEach((item) => {
+            const {
+              itemId,
+              itemName,
+              auctionStatus,
+              initialBid,
+              startDate,
+              endDate,
+            } = item;
+
             const itemContainer = document.createElement('div');
             itemContainer.classList.add('item-container');
 
             const listItem = document.createElement('li');
-            listItem.textContent = item.itemName;
-            listItem.addEventListener('click', () => {
-              const {
-                itemId,
-                itemName,
-                auctionStatus,
-                initialBid,
-                startDate,
-                endDate,
-              } = item;
+            listItem.textContent = itemName;
 
-              const url = `detail.html?itemId=${encodeURIComponent(
+            if (auctionStatus) {
+              const auctionButton = document.createElement('button');
+              auctionButton.textContent = '경매방';
+              auctionButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+
+                const socket = io(`/`, {
+                  withCredentials: true,
+                  extraHeaders: {
+                    access_token: getCookie('access_token'),
+                    socket_session_id: getCookie('socket_session_id'),
+                  },
+                });
+
+                socket.connect();
+                socket.disconnect();
+
+                const url = `room.html?itemId=${encodeURIComponent(
+                  itemId,
+                )}&offset=${encodeURIComponent(
+                  offset,
+                )}&limit=${encodeURIComponent(limit)}`;
+                window.location.href = url;
+              });
+
+              listItem.appendChild(document.createElement('br'));
+              listItem.appendChild(auctionButton);
+            }
+
+            listItem.addEventListener('click', () => {
+              console.log(itemId);
+
+              const url = `item.html?id=${encodeURIComponent(
                 itemId,
-              )}&itemName=${encodeURIComponent(
-                itemName,
-              )}&initialBid=${encodeURIComponent(
-                initialBid,
-              )}&startDate=${encodeURIComponent(
-                startDate,
-              )}&endDate=${encodeURIComponent(
-                endDate,
               )}&offset=${encodeURIComponent(
                 offset,
               )}&limit=${encodeURIComponent(limit)}`;
@@ -205,6 +218,7 @@
 
           totalItemsElement.textContent = `작품 개수: ${total}`;
         } catch (error) {
+          console.log(error);
           const { message } = error;
 
           if (message === '404') {

@@ -6,14 +6,15 @@ import {
   Param,
   UseInterceptors,
 } from '@nestjs/common';
-import { Schema as MongooseSchema } from 'mongoose';
 import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CacheKey } from '@nestjs/cache-manager';
+import { Schema as MongooseSchema } from 'mongoose';
 
+import { Room } from '../../entities/room.entity';
 import { RoomsService } from './rooms.service';
 import { ParseObjectIdPipe } from '../../pipes/parse-object-id.pipe';
-import { buildFilter } from '../../common/factories/common.factory';
 import { HttpCacheInterceptor } from '../../interceptors/cache.interceptor';
+import { buildFilter } from '../../common/factories/common.factory';
 
 @ApiTags('rooms')
 @Controller('rooms')
@@ -32,7 +33,7 @@ export class RoomsController {
   @Get('/:id')
   async getRoom(
     @Param('id', ParseObjectIdPipe) id: MongooseSchema.Types.ObjectId,
-  ) {
+  ): Promise<Room> {
     const filter = buildFilter('item._id', id);
 
     return await this.roomsService.findOne(filter);
