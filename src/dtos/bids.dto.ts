@@ -1,5 +1,5 @@
-import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Transform, Type } from 'class-transformer';
 import * as moment from 'moment';
 
 import { PageStateDto } from './page-state.dto';

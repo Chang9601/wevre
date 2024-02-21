@@ -20,10 +20,11 @@ import {
 } from '@nestjs/swagger';
 
 import { OrderDto } from '../../dtos/order.dto';
-// import { OrdersDto } from '../../dtos/orders.dto';
 import { CreateOrderDto } from '../../dtos/create-order.dto';
 import { OrdersDto } from '../../dtos/orders.dto';
 import { PaginationDto } from '../../dtos/pagination.dto';
+import { PageDto } from '../../dtos/page.dto';
+import { Order } from '../../entities/order.entity';
 import { OrdersService } from './orders.service';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -54,7 +55,7 @@ export class OrdersController {
   async placeOrder(
     @Req() request: RequestWithUser,
     @Body() createOrderDto: CreateOrderDto,
-  ) {
+  ): Promise<Order> {
     const { user } = request;
 
     return await this.ordersService.create(createOrderDto, user);
@@ -80,7 +81,7 @@ export class OrdersController {
     @Req() request: RequestWithUser,
     @Query()
     paginationDto: PaginationDto,
-  ) {
+  ): Promise<PageDto<Order>> {
     const { user } = request;
 
     return await this.ordersService.find(paginationDto, user);

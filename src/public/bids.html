@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>입찰 목록</title>
+    <script
+      src="https://cdn.socket.io/4.6.0/socket.io.min.js"
+      integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
+      crossorigin="anonymous"
+    ></script>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -75,7 +80,6 @@
 
       <div class="back-link">
         <a href="#" onclick="goHome()">홈으로</a>
-        <a href="#" id="order-link" onclick="goOrder()">주문하기</a>
       </div>
     </div>
 
@@ -91,19 +95,19 @@
         window.location.href = 'index.html';
       }
 
-      function goOrder() {
-        window.location.href = 'order.html';
-      }
-
       function isNumeric(input) {
         return /^[1-9][0-9]*$/.test(input);
       }
 
-      async function isAuthenticated() {
-        const response = await fetch('/auth/whoami');
-        const status = response.status;
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
 
-        return status === 200 ? true : false;
+        if (parts.length === 2) {
+          return parts.pop().split(';').shift();
+        }
+
+        return null;
       }
 
       function getQueryParams() {
@@ -117,6 +121,13 @@
         });
 
         return queryParams;
+      }
+
+      async function getHighestBid(itemId) {
+        const response = await fetch(`/bids/${itemId}`);
+        const bid = await response.json();
+
+        return bid;
       }
 
       async function deleteBid(id) {
@@ -180,6 +191,8 @@
               endDate,
             } = bid;
 
+            const highestBid = await getHighestBid(itemId);
+
             const bidContainer = document.createElement('div');
             bidContainer.classList.add('bid-container');
 
@@ -196,7 +209,18 @@
             if (auctionStatus) {
               button.textContent = '경매방';
               button.addEventListener('click', async () => {
-                url = `detail.html?itemId=${encodeURIComponent(
+                const socket = io(`/`, {
+                  withCredentials: true,
+                  extraHeaders: {
+                    access_token: getCookie('access_token'),
+                    socket_session_id: getCookie('socket_session_id'),
+                  },
+                });
+
+                socket.connect();
+                socket.disconnect();
+
+                url = `room.html?itemId=${encodeURIComponent(
                   itemId,
                 )}&itemName=${encodeURIComponent(
                   itemName,
@@ -209,11 +233,18 @@
                 window.location.href = url;
               });
             } else {
-              button.textContent = '낙찰!';
+              button.textContent =
+                price === highestBid.price ? '낙찰!' : '종료';
               button.style.backgroundColor = 'red';
               button.style.color = 'white';
               button.style.border = 'none';
               button.style.padding = '10px 20px';
+
+              if (button.textContent === '낙찰!') {
+                button.addEventListener('click', async () => {
+                  window.location.href = 'order-form.html';
+                });
+              }
             }
 
             listBid.appendChild(button);
@@ -239,7 +270,7 @@
           if (message === '401') {
             statusMessage.textContent = '로그인 필요';
           } else if (message === '404') {
-            statusMessage.textContent = '빈 입찰';
+            statusMessage.textContent = '입찰 내역 없음';
             document.getElementById('order-link').style.display = 'none';
           } else if (message === '500') {
             statusMessage.textContent = '오류 발생';

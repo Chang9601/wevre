@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { OrdersController } from './orders.controller';
-import { OrdersService } from './orders.service';
-import { OrdersRepository } from './orders.repository';
-import { BidsModule } from '../bids/bids.module';
 import { Order, OrderSchema } from '../../entities/order.entity';
 import { Bid, BidSchema } from '../../entities/bid.entity';
+import { OrdersController } from './orders.controller';
+import { OrdersService } from './orders.service';
+import { BidsModule } from '../bids/bids.module';
 
 @Module({
   imports: [
@@ -20,6 +19,6 @@ import { Bid, BidSchema } from '../../entities/bid.entity';
     BidsModule,
   ],
   controllers: [OrdersController],
-  providers: [OrdersService, OrdersRepository],
+  providers: [OrdersService],
 })
 export class OrdersModule {}

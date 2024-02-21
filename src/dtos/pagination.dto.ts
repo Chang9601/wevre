@@ -1,6 +1,6 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
 
 import { ValidationError, Pagination } from '../common/enums/common.enum';
 

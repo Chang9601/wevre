@@ -4,6 +4,12 @@ export enum Role {
   ADMIN = 'admin',
 }
 
+export enum OAuthProvider {
+  NONE = 'none',
+  GOOGLE = 'google',
+  NAVER = 'naver',
+}
+
 export enum Pagination {
   LIMIT = 10,
   OFFSET = 0,

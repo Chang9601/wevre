@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>주문 상세</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      .container {
+        width: 300px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        margin: 0 0 20px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      label,
+      span {
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 250px;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+        display: block;
+      }
+
+      span {
+        padding: 8px;
+        min-height: 30px;
+        line-height: 30px;
+        background-color: #f9f9f9;
+      }
+
+      input[type='submit'] {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        text-align: center;
+      }
+
+      input[type='submit']:hover {
+        background-color: #0056b3;
+      }
+
+      #status-message {
+        text-align: center;
+        color: red;
+        margin-top: 10px;
+      }
+
+      .back-link {
+        margin-top: 5px;
+      }
+
+      .back-link a {
+        text-decoration: none;
+        color: #007bff;
+      }
+
+      .back-link a:hover {
+        text-decoration: underline;
+      }
+
+      button#purchase-button {
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        text-align: center;
+        padding: 8px 12px;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+        outline: none;
+      }
+
+      button#purchase-button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>주문 상세</h2>
+      <form id="purchase-form">
+        <div id="items-container"></div>
+      </form>
+      <p id="status-message"></p>
+
+      <div class="back-link">
+        <a href="#" onclick="goBack()">이전으로</a>
+      </div>
+    </div>
+
+    <script src="./common.js"></script>
+
+    <script>
+      const statusMessage = document.getElementById('status-message');
+
+      function goBack() {
+        const offset = queryParams.offset || 1;
+        const limit = queryParams.limit | 10;
+
+        let url = 'orders.html';
+
+        if (offset && limit) {
+          url += `?offset=${offset}&limit=${limit}`;
+        }
+
+        window.location.href = url;
+      }
+
+      function getQueryParams() {
+        const queryParams = {};
+        const queryString = window.location.search.slice(1);
+        const paramPairs = queryString.split('&');
+
+        paramPairs.forEach((pair) => {
+          const [key, value] = pair.split('=');
+          queryParams[key] = decodeURIComponent(value);
+        });
+
+        return queryParams;
+      }
+
+      function displayInfo(
+        container,
+        elementId,
+        content,
+        itemId = -1,
+        isLink = false,
+      ) {
+        const element = document.createElement('span');
+        element.id = elementId;
+        element.name = elementId;
+
+        if (isLink) {
+          const link = document.createElement('a');
+          link.href = `item.html?id=${itemId}`;
+          link.textContent = content;
+          element.appendChild(link);
+        } else {
+          element.textContent = content;
+        }
+
+        container.appendChild(element);
+      }
+
+      const queryParams = getQueryParams();
+      const id = parseInt(queryParams.id);
+
+      async function fetchOrder() {
+        try {
+          const response = await fetch(`/orders/${id}`);
+          const status = response.status;
+
+          if (status === 404) {
+            throw new Error(404);
+          } else if (status === 500) {
+            throw new Error(500);
+          }
+
+          const order = await response.json();
+          const options = order.options;
+          const orderToOptions = order.orderToOptions;
+
+          const itemsContainer = document.getElementById('items-container');
+
+          for (let index = 0; index < options.length; index++) {
+            const { id: optionId, color, size } = options[index];
+            const orderToOption = orderToOptions[index];
+
+            const response = await fetch(`/items/options/${optionId}`);
+            const item = await response.json();
+
+            const { totalQuantity } = orderToOption;
+            const { id: itemId, name } = item;
+
+            const itemContainer = document.createElement('div');
+            itemContainer.classList.add('item-container');
+
+            displayInfo(itemContainer, 'name', `${name}`, itemId, true);
+            displayInfo(itemContainer, 'quantity', `개수: ${totalQuantity}개`);
+            displayInfo(itemContainer, 'color', `색상: ${color}`);
+            displayInfo(itemContainer, 'size', `크기: ${size}`);
+
+            itemsContainer.appendChild(itemContainer);
+          }
+        } catch (error) {
+          const { message } = error;
+
+          if (message === '404') {
+            statusMessage.textContent = '존재하지 않는 주문';
+          } else if (message === '500') {
+            statusMessage.textContent = '오류 발생';
+          } else {
+            statusMessage.textContent = '네트워크 오류 발생';
+          }
+        }
+      }
+
+      window.onload = fetchOrder;
+    </script>
+  </body>
+</html>

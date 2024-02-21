@@ -1,8 +1,8 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, Matches } from 'class-validator';
 
 import { ValidationError, Role } from '../common/enums/common.enum';
 import { ValidationRegex } from '../common/regex/common.regex';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
   @ApiProperty({

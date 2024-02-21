@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>개인정보</title>
+    <title>작품 상세</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -108,17 +108,25 @@
   </head>
   <body>
     <div class="container">
-      <h2>개인정보</h2>
+      <h2>작품 상세</h2>
       <form id="purchase-form">
-        <span id="name" name="name"></span>
-        <span id="email" name="email"></span>
-        <span id="bid-agreement" name="bid-agreement"></span>
+        <span id="item-name" name="item-name"></span>
+        <span id="artist-name" name="artist-name"></span>
+        <span id="description" name="description"></span>
+        <span id="initial-bid" name="initial-bid"></span>
+        <span id="completion-date" name="completion-date"></span>
+        <span id="weight" name="weight"></span>
+        <span id="height" name="height"></span>
+        <span id="width" name="width"></span>
+        <span id="length" name="length"></span>
+        <span id="category" name="category"></span>
+        <span id="materials" name="materials"></span>
       </form>
 
       <p id="status-message"></p>
 
       <div class="back-link">
-        <a href="#" onclick="goHome()">홈으로</a>
+        <a href="#" onclick="goBack()">목록으로</a>
       </div>
     </div>
 
@@ -127,15 +135,17 @@
     <script>
       const statusMessage = document.getElementById('status-message');
 
-      function goHome() {
-        window.location.href = 'index.html';
-      }
+      function goBack() {
+        const offset = queryParams.offset || 1;
+        const limit = queryParams.limit | 10;
 
-      async function isAuthenticated() {
-        const response = await fetch('/auth/whoami');
-        const status = response.status;
+        let url = 'items.html';
 
-        return status === 200 ? true : false;
+        if (offset && limit) {
+          url += `?offset=${offset}&limit=${limit}`;
+        }
+
+        window.location.href = url;
       }
 
       function getQueryParams() {
@@ -156,28 +166,47 @@
       }
 
       const queryParams = getQueryParams();
-      const id = parseInt(queryParams.id);
+      const { id } = queryParams;
 
-      async function fetchMe() {
+      async function fetchItem() {
         try {
-          const response = await fetch(`/auth/whoami`);
+          const response = await fetch(`/items/${id}`);
           const status = response.status;
 
-          if (status === 401) {
-            throw new Error(401);
+          if (status === 404) {
+            throw new Error(404);
           } else if (status === 500) {
             throw new Error(500);
           }
 
-          const user = await response.json();
-          const { name, email, bidAgreement } = user;
+          const item = await response.json();
+          console.log(item);
 
-          displayInfo('name', `이름: ${name}`);
-          displayInfo('email', `이메일: ${email}`);
-          displayInfo(
-            'bid-agreement',
-            `경매 참가 동의: ${bidAgreement ? 'O' : 'X'}`,
-          );
+          const {
+            itemName,
+            artistName,
+            description,
+            initialBid,
+            completionDate,
+            weight,
+            height,
+            width,
+            length,
+            category,
+            materials,
+          } = item;
+
+          displayInfo('item-name', `작품명: ${itemName}`);
+          displayInfo('artist-name', `작가명: ${artistName}`);
+          displayInfo('description', `설명: ${description}`);
+          displayInfo('initial-bid', `최저 입찰가: ${initialBid}원`);
+          displayInfo('completion-date', `완성 연도: ${completionDate}년`);
+          displayInfo('weight', `무게: ${weight}kg`);
+          displayInfo('height', `높이: ${height}m`);
+          displayInfo('width', `너비: ${width}cm`);
+          displayInfo('length', `길이: ${length}cm`);
+          displayInfo('category', `카테고리: ${category.name}`);
+          displayInfo('materials', `재료: ${materials[0].name}`);
 
           const form = document.getElementById('purchase-form');
           const optionsContainer = document.createElement('div');
@@ -185,8 +214,8 @@
         } catch (error) {
           const { message } = error;
 
-          if (message === '401') {
-            statusMessage.textContent = '로그인 필요';
+          if (message === '404') {
+            window.location.href = 'dne.html';
           } else if (message === '500') {
             statusMessage.textContent = '오류 발생';
           } else {
@@ -195,18 +224,7 @@
         }
       }
 
-      document.addEventListener('DOMContentLoaded', async function () {
-        const formContainer = document.querySelector('.container');
-
-        const authenticated = await isAuthenticated();
-
-        if (!authenticated) {
-          formContainer.style.display = 'none';
-          window.location.href = 'signin.html';
-        }
-      });
-
-      window.onload = fetchMe;
+      window.onload = fetchItem;
     </script>
   </body>
 </html>

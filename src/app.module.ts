@@ -1,14 +1,10 @@
-import { join } from 'path';
-
 import { MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
-import * as Joi from '@hapi/joi';
 import * as cookieParser from 'cookie-parser';
 import * as cors from 'cors';
 
@@ -17,12 +13,15 @@ import { ItemsModule } from './modules/items/items.module';
 import { BidsModule } from './modules/bids/bids.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { MongooseConfigService } from './configs/mongoose-config.service';
-import { AllExceptionFilter } from './filters/all-exception.filter';
 import { OrdersModule } from './modules/orders/orders.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { HealthModule } from './modules/health/health.module';
+import { ViewsModule } from './modules/views/views.module';
+import { AllExceptionFilter } from './filters/all-exception.filter';
+import { NotFoundExceptionFilter } from './filters/not-found-exception.filter';
+import { MongooseConfigService } from './configs/mongoose-config.service';
 import { CacheConfigService } from './configs/cache-config.service';
+import { validationSchema } from './configs/validation-schema';
 
 @Module({
   imports: [
@@ -33,30 +32,12 @@ import { CacheConfigService } from './configs/cache-config.service';
     RoomsModule,
     OrdersModule,
     HealthModule,
+    ViewsModule,
     ScheduleModule.forRoot(),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'views'),
-    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
-      validationSchema: Joi.object({
-        HOST: Joi.string().required(),
-        PORT: Joi.number().required(),
-        DB_HOST: Joi.string().required(),
-        DB_PORT: Joi.number().required(),
-        DB_DATABASE: Joi.string().required(),
-        DB_USERNAME: Joi.string().required(),
-        DB_PASSWORD: Joi.string().required(),
-        JWT_ACCESS_TOKEN_SECRET: Joi.string().required(),
-        JWT_ACCESS_TOKEN_EXPIRATION: Joi.string().required(),
-        JWT_REFRESH_TOKEN_SECRET: Joi.string().required(),
-        JWT_REFRESH_TOKEN_EXPIRATION: Joi.string().required(),
-        CACHE_TTL: Joi.number().required(),
-        CACHE_MAX: Joi.number().required(),
-        REDIS_HOST: Joi.string().required(),
-        REDIS_PORT: Joi.number().required(),
-      }),
+      validationSchema: validationSchema,
     }),
     MongooseModule.forRootAsync({
       useClass: MongooseConfigService,
@@ -72,9 +53,14 @@ import { CacheConfigService } from './configs/cache-config.service';
       useClass: AllExceptionFilter,
     },
     {
+      provide: APP_FILTER,
+      useClass: NotFoundExceptionFilter,
+    },
+    {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
         whitelist: true,
+        transform: true,
         skipMissingProperties: true,
       }),
     },

@@ -4,10 +4,9 @@ export class QueryBuilder {
   constructor(private search: string, private sort: string) {}
 
   private searchOptions = ['itemName', 'artistName'];
-  private dateOptions = ['startDate', 'endDate'];
+  // private dateOptions = ['startDate', 'endDate'];
   private sortOptions = ['initialBid', 'completionDate', 'artistName'];
-
-  private today = new Date().toISOString();
+  //private today = new Date().toISOString();
 
   buildSearchQuery(option: string) {
     const searchQuery = {};
@@ -25,12 +24,13 @@ export class QueryBuilder {
       }
     }
 
-    const dateQuery = {};
+    // 경매방이 존재하는 작품만 표시하려고 했는데 버튼으로 수정해서 주석 처리.
+    // const dateQuery = {};
 
-    dateQuery[this.dateOptions[0]] = { $lte: new Date(this.today) };
-    dateQuery[this.dateOptions[1]] = { $gte: new Date(this.today) };
+    // dateQuery[this.dateOptions[0]] = { $lte: new Date(this.today) };
+    // dateQuery[this.dateOptions[1]] = { $gte: new Date(this.today) };
 
-    Object.assign(searchQuery, dateQuery);
+    // Object.assign(searchQuery, dateQuery);
 
     return searchQuery;
   }

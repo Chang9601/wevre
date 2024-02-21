@@ -1,8 +1,8 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { Schema as MongooseSchema } from 'mongoose';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class OrderDto {
   @ApiProperty({

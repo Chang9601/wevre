@@ -139,13 +139,6 @@
         window.location.href = 'index.html';
       }
 
-      async function isAuthenticated() {
-        const response = await fetch('/auth/whoami');
-        const status = response.status;
-
-        return status === 200 ? true : false;
-      }
-
       document.addEventListener('DOMContentLoaded', async function () {
         const formContainer = document.querySelector('.container');
 

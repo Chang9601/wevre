@@ -1,6 +1,6 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsMongoId } from 'class-validator';
 import { Schema as MongooseSchema } from 'mongoose';
-import { ApiProperty } from '@nestjs/swagger';
 
 import { ValidationError } from '../common/enums/common.enum';
 

@@ -19,8 +19,6 @@ async function refreshAccessToken() {
 
     if (message === '500') {
       statusMessage.textContent = '오류 발생';
-    } else {
-      statusMessage.textContent = '네트워크 오류 발생';
     }
   }
 }
@@ -34,3 +32,10 @@ setInterval(async () => {
     console.error(error);
   }
 }, tokenRefreshInterval);
+
+async function isAuthenticated() {
+  const response = await fetch('/auth/whoami');
+  const status = response.status;
+
+  return status === 200 ? true : false;
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+
+      .container {
+        text-align: center;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+        font-size: 24px;
+        color: red;
+      }
+
+      .back-link {
+        margin-top: 5px;
+      }
+
+      .back-link a {
+        text-decoration: none;
+        color: #007bff;
+      }
+
+      .back-link a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>존재하지 않는 페이지!</h1>
+
+      <div class="back-link">
+        <a href="#" onclick="goHome()">홈으로</a>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    function goHome() {
+      window.location.href = 'index.html';
+    }
+  </script>
+</html>
