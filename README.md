@@ -1,8 +1,9 @@
 # Wevre
 
 ## 소개
-- WebSocket 프로토콜을 사용하여 실시간 경매방을 구현한 위코드 2차 프로젝트 Wevre를 HTTP 폴링을 포함한 SocketIO 라이브러리로 리팩토링하고 있습니다.
-- 개발 시 SocketIO 라이브러리의 HTTP 폴링으로 실시간 경매방을 구현했으며 배포 시 스케일 아웃을 염두해 어댑터를 구현했으며 스티키 세션 활성화를 위해 쿠키를 사용했습니다.
+- Wevre는 Kream이라는 사이트의 한정판과 경매라는 두 가지 방식을 차용해 예술품이라는 한정판을 거래하는 웹 서비스입니다([기획 의도](https://github.com/Chang9601/43-2nd-Wevre-backend)).
+- WebSocket 프로토콜을 사용하여 실시간 경매방을 구현한 위코드 2차 프로젝트 Wevre를 HTTP 폴링을 포함한 Socket.IO 라이브러리로 리팩토링하고 있습니다.
+- 개발 시 Socket.IO 라이브러리의 HTTP 폴링으로 실시간 경매방을 구현했으며 배포 시 스케일 아웃을 염두해 어댑터를 구현했으며 스티키 세션 활성화를 위해 쿠키를 사용했습니다.
 - 또한 관계형 데이터베이스인 MySQL을 사용한 Wevre와 달리 리팩토링에서는 NoSQL 데이터베이스 MongoDB를 사용해서 NoSQL 데이터베이스의 특징과 쿼리를 체득하고 있습니다.
 
 ## 실행
@@ -14,7 +15,7 @@ main 브랜치의 docker-compose.yml 파일을 docker compose up --build 명령�
 ## 기술 스택
 |개발|
 | :----: |
-|![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) ![NestJS](https://img.shields.io/badge/nestjs-%23E0234E.svg?style=for-the-badge&logo=nestjs&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white) ![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white) ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)|
+|![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) ![NestJS](https://img.shields.io/badge/nestjs-%23E0234E.svg?style=for-the-badge&logo=nestjs&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white) ![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white) ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white) ![Socket.io](https://img.shields.io/badge/Socket.io-010101?&style=for-the-badge&logo=Socket.io&logoColor=white)|
 
 ## API
 애플리케이션 실행 후 http://localhost:3000/api
