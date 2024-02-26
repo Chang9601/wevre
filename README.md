@@ -40,7 +40,7 @@ https://whooa27.blogspot.com/search/label/wevre
 ### 입찰: 1개의 경매방(4명)
 [Screencast from 2024년 01월 29일 12시 00분 18초.webm](https://github.com/Chang9601/wevre/assets/79137839/d87c9165-e36c-438e-9bce-67f2a044586d)
 
-### Redis 어댑터(SocketIO 서버 스케일 아웃)
+### Redis 어댑터(Socket.IO 서버 스케일 아웃)
 [Screencast from 2024년 02월 18일 22시 43분 20초.webm](https://github.com/Chang9601/wevre/assets/79137839/aa22715c-dd7f-4c7f-a6c0-cb93119f9e91)
 
 ### 낙찰
